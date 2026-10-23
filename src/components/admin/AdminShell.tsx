@@ -16,7 +16,7 @@ const NAV: NavItem[] = [
   { href: "/admin/hero", label: "Hero", icon: Megaphone, perm: "content.manage" },
   { href: "/admin/about", label: "About", icon: BookOpen, perm: "content.manage" },
   { href: "/admin/news", label: "Berita", icon: Newspaper, perm: "news.write" },
-  { href: "/admin/features", label: "Fitur", icon: Sparkles, perm: "content.manage" },
+  { href: "/admin/features", label: "Layanan", icon: Sparkles, perm: "content.manage" },
   { href: "/admin/pages", label: "Halaman", icon: FileText, perm: "content.manage" },
   { href: "/admin/media", label: "Media", icon: ImageIcon, perm: "media.upload" },
   { href: "/admin/messages", label: "Pesan", icon: Inbox, perm: "messages.manage" },

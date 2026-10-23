@@ -8,7 +8,7 @@ import { formatDate } from "@/components/api";
 export function NewsCardView({ n }: { n: NewsCard }) {
   const hasVideo = n.media?.some((m) => m.type !== "image");
   return (
-    <article className="group flex flex-col overflow-hidden rounded-card border border-border bg-surface shadow-[var(--shadow)]">
+    <article className="group flex h-full w-full flex-col overflow-hidden rounded-card border border-border bg-surface shadow-[var(--shadow)]">
       <Link href={`/berita/${n.slug}`} className="relative block aspect-[16/10] overflow-hidden bg-surface-2" tabIndex={-1} aria-hidden>
         {n.coverImage ? (
           <img src={n.coverImage} alt="" loading="lazy" className="size-full object-cover transition-transform duration-300 group-hover:scale-105" />
@@ -24,7 +24,7 @@ export function NewsCardView({ n }: { n: NewsCard }) {
           {n.category && <span className="rounded-full border border-border px-2.5 py-0.5 font-medium">{n.category.name}</span>}
           <time dateTime={n.publishedAt}>{formatDate(n.publishedAt)}</time>
         </div>
-        <h3 className="text-xl leading-snug">
+        <h3 className="line-clamp-3 text-xl leading-snug">
           <Link href={`/berita/${n.slug}`} className="after:absolute after:inset-0 hover:underline">
             {n.title}
           </Link>
@@ -50,7 +50,7 @@ export function FeatureCardView({ f }: { f: { slug: string; title: string; summa
       </span>
       <h3 className="text-xl">{f.title}</h3>
       {f.summary && <p className="text-sm text-muted">{f.summary}</p>}
-      <Link href={`/fitur/${f.slug}`} className="mt-auto inline-flex min-h-11 items-center gap-1 text-sm font-medium underline underline-offset-4 after:absolute after:inset-0" aria-label={`More Detail: ${f.title}`}>
+      <Link href={`/layanan/${f.slug}`} className="mt-auto inline-flex min-h-11 items-center gap-1 text-sm font-medium underline underline-offset-4 after:absolute after:inset-0" aria-label={`More Detail: ${f.title}`}>
         More Detail <Lucide.ArrowRight className="size-4" aria-hidden />
       </Link>
     </article>

@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
-const PAGES = ["/", "/berita", "/fitur", "/kontak", "/pengaduan", "/pengaduan/lacak", "/admin/login"];
+const PAGES = ["/", "/berita", "/layanan", "/kontak", "/pengaduan", "/pengaduan/lacak", "/admin/login"];
 
 async function axe(page: Page) {
   const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"]).analyze();
@@ -104,8 +104,8 @@ test("daftar dan detail berita dapat dibuka dari kartu, ada tombol Dengarkan", a
   expect(await axe(page)).toEqual([]);
 });
 
-test("detail fitur terbuka lewat More Detail", async ({ page }) => {
-  await page.goto("/fitur");
+test("detail layanan terbuka lewat More Detail", async ({ page }) => {
+  await page.goto("/layanan");
   await page.getByRole("link", { name: /More Detail: Fitur Uji/ }).first().click();
   await expect(page.getByRole("heading", { level: 1, name: /Fitur Uji/ })).toBeVisible();
   await expect(page.getByText("Isi fitur uji.")).toBeVisible();

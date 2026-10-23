@@ -6,7 +6,8 @@ export const metadata: Metadata = { title: "Hero" };
 
 const fields: Field[] = [
   { type: "text", name: "title", label: "Judul", required: true, maxLength: 160 },
-  { type: "textarea", name: "description", label: "Deskripsi", maxLength: 400 },
+  { type: "text", name: "subtitle", label: "Subjudul", maxLength: 120, hint: "Tampil di bawah judul, mis. Polda Sumatera Utara." },
+  { type: "textarea", name: "description", label: "Deskripsi", maxLength: 600 },
   {
     type: "select",
     name: "mediaType",
@@ -18,7 +19,7 @@ const fields: Field[] = [
       { value: "embed", label: "Embed YouTube/Vimeo" },
     ],
   },
-  { type: "image", name: "image", label: "Gambar", hint: "Wajib bila jenis media gambar." },
+  { type: "image", name: "image", label: "Gambar", hint: "Kosongkan untuk latar monokrom dengan lambang TIK Polri. Alt text wajib bila gambar diisi." },
   { type: "text", name: "alt", label: "Alt text", hint: "Wajib untuk gambar. Jelaskan isi gambar secara singkat.", maxLength: 200 },
   { type: "image", name: "videoUrl", label: "URL video MP4", kind: "video" },
   { type: "image", name: "poster", label: "Gambar poster video" },

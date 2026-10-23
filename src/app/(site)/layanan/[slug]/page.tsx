@@ -6,16 +6,16 @@ import { Container, LinkButton } from "@/components/ui";
 import { FeatureCardView, FeatureIcon, SectionHeading } from "@/components/site/Cards";
 import { getFeatureBySlug } from "@/lib/public-data";
 
-type Props = PageProps<"/fitur/[slug]">;
+type Props = PageProps<"/layanan/[slug]">;
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
   const { slug } = await props.params;
   const f = await getFeatureBySlug(slug);
-  if (!f) return { title: "Fitur tidak ditemukan" };
+  if (!f) return { title: "Layanan tidak ditemukan" };
   return {
     title: f.seo?.title || f.title,
     description: f.seo?.description || f.summary,
-    alternates: { canonical: `/fitur/${f.slug}` },
+    alternates: { canonical: `/layanan/${f.slug}` },
     openGraph: { images: f.seo?.ogImage || f.heroImage ? [f.seo?.ogImage || f.heroImage] : undefined },
   };
 }
@@ -65,8 +65,8 @@ export default async function FeatureDetail(props: Props) {
 
       {f.related?.length > 0 && (
         <section className="mt-20" aria-labelledby="fitur-terkait">
-          <h2 id="fitur-terkait" className="sr-only">Fitur terkait</h2>
-          <SectionHeading title="Fitur terkait" />
+          <h2 id="fitur-terkait" className="sr-only">Layanan terkait</h2>
+          <SectionHeading title="Layanan terkait" />
           <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {f.related.map((r: { _id: string; slug: string; title: string; summary?: string; icon?: string }) => (
               <li key={r._id}><FeatureCardView f={r} /></li>

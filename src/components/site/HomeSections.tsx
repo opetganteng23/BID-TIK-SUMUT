@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Container, EmptyState } from "@/components/ui";
-import { NewsCardView, SectionHeading } from "@/components/site/Cards";
+import { SectionHeading } from "@/components/site/Cards";
+import { NewsCarousel } from "@/components/site/NewsCarousel";
 import { FeaturesBrowser } from "@/components/site/FeaturesBrowser";
 import { HeroCarousel } from "@/components/site/HeroCarousel";
 import { getAbout, getFeatureCategories, getHeroSlides, listFeatures, listNews } from "@/lib/public-data";
@@ -60,13 +61,7 @@ export async function NewsSection({ section, count, category }: { section: Secti
         {items.length === 0 ? (
           <EmptyState title="Belum ada berita">Berita yang diterbitkan akan tampil di sini.</EmptyState>
         ) : (
-          <ul className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((n) => (
-              <li key={n._id} className="relative">
-                <NewsCardView n={n} />
-              </li>
-            ))}
-          </ul>
+          <NewsCarousel items={items} />
         )}
       </Container>
     </section>
@@ -79,7 +74,7 @@ export async function FeaturesSection({ section }: { section: Section }) {
     <section id="fitur" className="py-20" aria-labelledby="features-title">
       <Container>
         <div id="features-title" className="sr-only">{section.title}</div>
-        <SectionHeading title={section.title || "Fitur"} subtitle={section.subtitle} href="/fitur" />
+        <SectionHeading title={section.title || "Layanan"} subtitle={section.subtitle} href="/layanan" />
         <FeaturesBrowser features={features} categories={categories} />
       </Container>
     </section>

@@ -2,13 +2,13 @@ import type { Metadata } from "next";
 import { requirePage } from "@/lib/auth/guard";
 import { ResourceManager } from "@/components/admin/ResourceManager";
 
-export const metadata: Metadata = { title: "Kategori fitur" };
+export const metadata: Metadata = { title: "Kategori layanan" };
 
 export default async function Page() {
   await requirePage("content.manage");
   return (
     <ResourceManager
-      title="Kategori fitur"
+      title="Kategori layanan"
       noun="kategori"
       endpoint="/api/admin/feature-categories"
       reorderable

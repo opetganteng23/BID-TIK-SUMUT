@@ -21,6 +21,13 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
   },
+  async redirects() {
+    // Alamat lama /fitur berganti menjadi /layanan.
+    return [
+      { source: "/fitur", destination: "/layanan", permanent: true },
+      { source: "/fitur/:slug", destination: "/layanan/:slug", permanent: true },
+    ];
+  },
   async headers() {
     return [
       { source: "/:path*", headers: securityHeaders },

@@ -370,7 +370,7 @@ async function main() {
   const alist = await admin.get("/api/admin/users?limit=100");
   check("admin bisa melihat daftar pengguna", alist.status === 200 && userList(alist).length >= 5, alist.status);
   check("daftar pengguna tanpa passwordHash", !JSON.stringify(alist.json).includes("passwordHash"));
-  const sas = userList(alist).find((u) => u.role === "super_admin");
+  const sas = userList(alist).find((u) => u.email === "superadmin@example.test");
   const byEmail = (e: string) => userList(alist).find((u) => u.email === e);
   check("admin tidak bisa membuat Super Admin", (await admin.post("/api/admin/users", { name: "Eskalasi", email: `esk-${unique}@example.test`, role: "super_admin", password: "PasswordSementara-1" })).status === 403);
   check("admin tidak bisa mengubah peran jadi Super Admin", (await admin.patch(`/api/admin/users/${byEmail(`editor2-${unique}@example.test`)._id}`, { role: "super_admin" })).status === 403);
@@ -440,7 +440,7 @@ async function main() {
   check("media yang dipakai tidak bisa dihapus", del.status === 409, del.json);
 
   console.log("14. Halaman publik");
-  for (const p of ["/", "/berita", "/fitur", "/kontak", "/pengaduan", "/pengaduan/lacak", "/admin/login", "/robots.txt", "/sitemap.xml"]) {
+  for (const p of ["/", "/berita", "/layanan", "/kontak", "/pengaduan", "/pengaduan/lacak", "/admin/login", "/robots.txt", "/sitemap.xml"]) {
     const r = await fetch(BASE + p);
     check(`GET ${p} 200`, r.status === 200, r.status);
   }

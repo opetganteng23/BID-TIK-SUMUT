@@ -23,7 +23,7 @@ const GROUPS: Group[] = [
       { type: "text", name: "siteName", label: "Nama situs", required: true },
       { type: "text", name: "tagline", label: "Tagline" },
       { type: "text", name: "orgName", label: "Nama lembaga" },
-      { type: "image", name: "logoLight", label: "Logo (tema terang)", kind: "logo", hint: "Logo menyusul. Selama kosong, nama situs tampil sebagai teks." },
+      { type: "image", name: "logoLight", label: "Logo (tema terang)", kind: "logo", hint: "Kosongkan untuk memakai logo bawaan (Lambang Polda Sumut dan TIK Polri)." },
       { type: "image", name: "logoDark", label: "Logo (tema gelap)", kind: "logo" },
       { type: "image", name: "favicon", label: "Favicon", kind: "logo" },
       { type: "checkbox", name: "maintenanceMode", label: "Mode pemeliharaan (situs publik ditutup sementara)", default: false },
@@ -69,7 +69,7 @@ const GROUPS: Group[] = [
         max: 4,
         addLabel: "Tambah section",
         fields: [
-          { type: "select", name: "key", label: "Section", required: true, options: [{ value: "hero", label: "Hero" }, { value: "about", label: "About" }, { value: "news", label: "Berita" }, { value: "features", label: "Fitur" }] },
+          { type: "select", name: "key", label: "Section", required: true, options: [{ value: "hero", label: "Hero" }, { value: "about", label: "About" }, { value: "news", label: "Berita" }, { value: "features", label: "Layanan" }] },
           { type: "checkbox", name: "enabled", label: "Aktif" },
           { type: "number", name: "order", label: "Urutan (angka kecil tampil lebih dulu)" },
           { type: "text", name: "title", label: "Judul" },
@@ -93,7 +93,7 @@ const GROUPS: Group[] = [
         addLabel: "Tambah pita",
         fields: [
           { type: "text", name: "id", label: "ID unik (tanpa spasi)", required: true },
-          { type: "select", name: "after", label: "Tampil setelah section", required: true, options: [{ value: "hero", label: "Hero" }, { value: "about", label: "About" }, { value: "news", label: "Berita" }, { value: "features", label: "Fitur" }] },
+          { type: "select", name: "after", label: "Tampil setelah section", required: true, options: [{ value: "hero", label: "Hero" }, { value: "about", label: "About" }, { value: "news", label: "Berita" }, { value: "features", label: "Layanan" }] },
           { type: "checkbox", name: "enabled", label: "Aktif" },
           { type: "number", name: "speed", label: "Kecepatan (10 sampai 200)" },
           { type: "select", name: "direction", label: "Arah", default: "left", options: [{ value: "left", label: "Ke kiri" }, { value: "right", label: "Ke kanan" }] },

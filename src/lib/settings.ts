@@ -6,13 +6,13 @@ export const DEFAULT_SECTIONS = [
   { key: "hero", enabled: true, order: 0, title: "", subtitle: "" },
   { key: "about", enabled: true, order: 1, title: "Tentang Kami", subtitle: "" },
   { key: "news", enabled: true, order: 2, title: "Berita Terbaru", subtitle: "" },
-  { key: "features", enabled: true, order: 3, title: "Fitur", subtitle: "" },
+  { key: "features", enabled: true, order: 3, title: "Layanan", subtitle: "" },
 ] as const;
 
 export const DEFAULT_MENU = [
   { label: "Beranda", href: "/", enabled: true, openInNewTab: false, children: [] },
   { label: "Berita", href: "/berita", enabled: true, openInNewTab: false, children: [] },
-  { label: "Fitur", href: "/fitur", enabled: true, openInNewTab: false, children: [] },
+  { label: "Layanan", href: "/layanan", enabled: true, openInNewTab: false, children: [] },
   { label: "Pengaduan", href: "/pengaduan", enabled: true, openInNewTab: false, children: [] },
   { label: "Kontak", href: "/kontak", enabled: true, openInNewTab: false, children: [] },
 ];

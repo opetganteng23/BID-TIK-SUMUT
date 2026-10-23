@@ -16,6 +16,7 @@ type Slide = {
   embedUrl?: string;
   poster?: string;
   title: string;
+  subtitle?: string;
   description?: string;
   alt?: string;
   ctas?: { label: string; href: string; style: "primary" | "secondary" }[];
@@ -68,11 +69,19 @@ export function HeroCarousel({ slides }: { slides: Slide[] }) {
               {s.mediaType === "embed" && s.embedUrl && (
                 <iframe className="absolute inset-0 size-full" src={s.embedUrl} title={s.alt || s.title} loading="lazy" allowFullScreen />
               )}
+              {/* Tanpa media: latar monokrom dengan lambang TIK Polri */}
+              {!(s.image || s.videoUrl || s.embedUrl) && (
+                <>
+                  <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-neutral-700 via-neutral-900 to-black" />
+                  <img aria-hidden src="/brand/tik-polri.png" alt="" className="absolute right-[6%] top-1/2 hidden h-[62%] w-auto -translate-y-1/2 opacity-95 drop-shadow-2xl md:block" />
+                </>
+              )}
               {/* Scrim gradien monokrom agar kontras teks terjaga */}
               <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/10" />
-              <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-end px-4 pb-24 pt-32 text-white md:px-6">
-                <h2 className="max-w-3xl text-4xl md:text-6xl">{s.title}</h2>
-                {s.description && <p className="mt-4 max-w-2xl text-lg text-white/90">{s.description}</p>}
+              <div className="relative mx-auto flex h-full max-w-[1200px] flex-col justify-center px-4 pb-28 pt-28 text-white md:px-6">
+                <h2 className="max-w-3xl text-4xl font-semibold uppercase tracking-tight md:text-6xl lg:text-7xl">{s.title}</h2>
+                {s.subtitle && <p className="mt-3 max-w-3xl text-2xl font-semibold uppercase md:text-3xl">{s.subtitle}</p>}
+                {s.description && <p className="mt-5 max-w-2xl text-base leading-relaxed text-white/90 md:text-lg">{s.description}</p>}
                 {s.ctas && s.ctas.length > 0 && (
                   <div className="mt-6 flex flex-wrap gap-3">
                     {s.ctas.map((c) => (

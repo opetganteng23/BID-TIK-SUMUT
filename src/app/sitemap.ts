@@ -11,9 +11,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (!settings.seo.robotsIndex) return [];
   const [news, features, pages] = await Promise.all([listNewsSlugs(), listFeatureSlugs(), listPageSlugs()]);
   return [
-    ...["", "/berita", "/fitur", "/kontak", "/pengaduan"].map((p) => ({ url: `${base}${p}` })),
+    ...["", "/berita", "/layanan", "/kontak", "/pengaduan"].map((p) => ({ url: `${base}${p}` })),
     ...news.map((n) => ({ url: `${base}/berita/${n.slug}`, lastModified: n.updatedAt })),
-    ...features.map((f) => ({ url: `${base}/fitur/${f.slug}`, lastModified: f.updatedAt })),
+    ...features.map((f) => ({ url: `${base}/layanan/${f.slug}`, lastModified: f.updatedAt })),
     ...pages.map((p) => ({ url: `${base}/${p.slug}`, lastModified: p.updatedAt })),
   ];
 }

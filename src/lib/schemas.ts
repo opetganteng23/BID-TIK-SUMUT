@@ -43,7 +43,8 @@ export const seoSchema = z
 
 export const heroSchema = z.object({
   title: z.string().min(1, "Judul wajib diisi.").max(160),
-  description: z.string().max(400).optional(),
+  subtitle: z.string().max(120).optional(),
+  description: z.string().max(600).optional(),
   mediaType: z.enum(["image", "video", "embed"]),
   image: optionalHttpsUrl,
   videoUrl: optionalHttpsUrl,

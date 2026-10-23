@@ -3,6 +3,7 @@ export const RESERVED_SLUGS = new Set([
   "api",
   "berita",
   "fitur",
+  "layanan",
   "kontak",
   "pengaduan",
   "lacak-pengaduan",

@@ -1,8 +1,5 @@
-Letakkan aset merek di folder ini:
+Aset merek di folder ini:
 
-- logo-light.svg atau .png (logo untuk tema terang)
-- logo-dark.svg atau .png (logo untuk tema gelap)
-- favicon.ico (salin juga ke src/app/favicon.ico)
-- logo untuk running text (PNG/WebP, maks. 1 MB)
-
-Selama belum ada, situs memakai teks nama sebagai pengganti logo.
+- lambang-polda-sumut.png dan tik-polri.png: logo bawaan yang tampil di header dan footer.
+- Logo dapat diganti dari admin: Site Settings > Identitas (logo terang dan gelap). Bila diisi, logo bawaan tidak dipakai.
+- src/app/icon.png adalah favicon (salinan lambang Polda Sumut).

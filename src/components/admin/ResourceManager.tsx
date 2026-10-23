@@ -38,7 +38,7 @@ type Props = {
   searchable?: boolean;
   filters?: TableFilter[];
   reorderable?: boolean;
-  /** Tautan pratinjau: base saja (mis. "/") atau base + nilai kolom `key` (mis. "/fitur/" + slug). */
+  /** Tautan pratinjau: base saja (mis. "/") atau base + nilai kolom `key` (mis. "/layanan/" + slug). */
   preview?: { base: string; key?: string };
   canWrite?: boolean;
   defaults?: Record<string, any>;

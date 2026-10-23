@@ -135,6 +135,7 @@ export const HeroSlide = define(
       embedUrl: String,
       poster: String,
       title: { type: String, required: true },
+      subtitle: String,
       description: String,
       alt: String,
       ctas: [new Schema({ label: String, href: String, style: { type: String, enum: ["primary", "secondary"], default: "primary" } }, { _id: false })],

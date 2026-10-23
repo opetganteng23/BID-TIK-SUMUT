@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { ApiClientError, api } from "@/components/api";
+import { ArrowLeft } from "lucide-react";
+import { Brand } from "@/components/site/Brand";
 import { Button, Notice, TextInput } from "@/components/ui";
 
 function useSubmit<T>(fn: (fd: FormData) => Promise<T>, onOk: (r: T) => void) {
@@ -26,13 +28,17 @@ function useSubmit<T>(fn: (fd: FormData) => Promise<T>, onOk: (r: T) => void) {
   return { busy, error, handle, setError };
 }
 
-function Shell({ title, children }: { title: string; children: React.ReactNode }) {
+function Shell({ title, children, back = { href: "/", label: "Kembali ke beranda" } }: { title: string; children: React.ReactNode; back?: { href: string; label: string } }) {
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-16">
-      <div className="rounded-[20px] border border-border bg-surface p-6 shadow-[var(--shadow)] md:p-8">
+    <div className="flex min-h-svh w-full flex-col items-center justify-center gap-6 px-4 py-10">
+      <Brand name="BID TIK Polda Sumatera Utara" />
+      <div className="w-full max-w-md rounded-[20px] border border-border bg-surface p-6 shadow-[var(--shadow)] md:p-8">
         <h1 className="mb-6 text-3xl">{title}</h1>
         {children}
       </div>
+      <Link href={back.href} className="inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-border px-5 text-sm font-medium hover:bg-surface-2">
+        <ArrowLeft className="size-4" aria-hidden /> {back.label}
+      </Link>
     </div>
   );
 }
@@ -144,7 +150,7 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
     },
   );
   return (
-    <Shell title="Ganti password">
+    <Shell title="Ganti password" back={forced ? { href: "/", label: "Kembali ke beranda" } : { href: "/admin", label: "Kembali ke dashboard" }}>
       {forced && <div className="mb-4"><Notice kind="info">Demi keamanan, Anda wajib mengganti password sebelum memakai panel admin.</Notice></div>}
       <form onSubmit={f.handle} className="space-y-4" noValidate>
         <ErrorBox error={f.error} />

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requirePage } from "@/lib/auth/guard";
 import { ResourceManager, type Field } from "@/components/admin/ResourceManager";
 
-export const metadata: Metadata = { title: "Fitur" };
+export const metadata: Metadata = { title: "Layanan" };
 
 const fields: Field[] = [
   { type: "text", name: "title", label: "Judul", required: true, maxLength: 160 },
@@ -36,12 +36,12 @@ export default async function Page() {
     <div className="space-y-4">
       <p className="text-sm">
         <Link href="/admin/features/categories" className="underline underline-offset-4">
-          Kelola kategori fitur
+          Kelola kategori layanan
         </Link>
       </p>
       <ResourceManager
-        title="Fitur"
-        noun="fitur"
+        title="Layanan"
+        noun="layanan"
         endpoint="/api/admin/features"
         fields={fields}
         searchable
@@ -49,7 +49,7 @@ export default async function Page() {
           { name: "category", label: "Kategori", optionsUrl: "/api/admin/feature-categories" },
           { name: "enabled", label: "Status", options: [{ value: "true", label: "Aktif" }, { value: "false", label: "Nonaktif" }] },
         ]}
-        preview={{ base: "/fitur/", key: "slug" }}
+        preview={{ base: "/layanan/", key: "slug" }}
         columns={[
           { key: "title", label: "Judul", sort: "title" },
           { key: "category.name", label: "Kategori" },
