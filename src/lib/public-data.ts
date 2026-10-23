@@ -32,7 +32,7 @@ export const getHeroSlides = unstable_cache(
     return plain<any[]>(await HeroSlide.find({ enabled: true }).sort({ order: 1 }).lean());
   },
   ["hero"],
-  { tags: ["hero"] },
+  { tags: ["hero"], revalidate: 60 },
 );
 
 export const getAbout = unstable_cache(
@@ -41,7 +41,7 @@ export const getAbout = unstable_cache(
     return plain<any | null>(await About.findOne({ key: "singleton" }, { bodyJson: 0 }).lean());
   },
   ["about"],
-  { tags: ["about"] },
+  { tags: ["about"], revalidate: 60 },
 );
 
 export const getNewsCategories = unstable_cache(
@@ -50,7 +50,7 @@ export const getNewsCategories = unstable_cache(
     return plain<{ _id: string; name: string; slug: string }[]>(await NewsCategory.find().sort({ name: 1 }).lean());
   },
   ["news-categories"],
-  { tags: ["news"] },
+  { tags: ["news"], revalidate: 60 },
 );
 
 export const getFeatureCategories = unstable_cache(
@@ -59,7 +59,7 @@ export const getFeatureCategories = unstable_cache(
     return plain<{ _id: string; name: string; slug: string }[]>(await FeatureCategory.find().sort({ order: 1 }).lean());
   },
   ["feature-categories"],
-  { tags: ["features"] },
+  { tags: ["features"], revalidate: 60 },
 );
 
 export type NewsListArgs = { limit?: number; page?: number; cursor?: string; category?: string; q?: string };
@@ -131,7 +131,7 @@ export const listFeatures = unstable_cache(
     );
   },
   ["features-list"],
-  { tags: ["features"] },
+  { tags: ["features"], revalidate: 60 },
 );
 
 export const getFeatureBySlug = unstable_cache(
@@ -145,7 +145,7 @@ export const getFeatureBySlug = unstable_cache(
     return plain<any>({ ...doc, related });
   },
   ["feature-detail"],
-  { tags: ["features"] },
+  { tags: ["features"], revalidate: 60 },
 );
 
 export const getPageBySlug = unstable_cache(
@@ -155,7 +155,7 @@ export const getPageBySlug = unstable_cache(
     return doc ? plain<any>(doc) : null;
   },
   ["page-detail"],
-  { tags: ["pages"] },
+  { tags: ["pages"], revalidate: 60 },
 );
 
 export const listPageSlugs = unstable_cache(
@@ -164,7 +164,7 @@ export const listPageSlugs = unstable_cache(
     return plain<{ slug: string; updatedAt: string }[]>(await Page.find({ enabled: true }, "slug updatedAt").lean());
   },
   ["page-slugs"],
-  { tags: ["pages"] },
+  { tags: ["pages"], revalidate: 60 },
 );
 
 export const listNewsSlugs = unstable_cache(
@@ -182,5 +182,5 @@ export const listFeatureSlugs = unstable_cache(
     return plain<{ slug: string; updatedAt: string }[]>(await Feature.find({ enabled: true }, "slug updatedAt").lean());
   },
   ["feature-slugs"],
-  { tags: ["features"] },
+  { tags: ["features"], revalidate: 60 },
 );

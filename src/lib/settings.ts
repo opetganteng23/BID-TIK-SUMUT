@@ -62,7 +62,7 @@ export const getPublicSettings = unstable_cache(
     };
   },
   ["public-settings"],
-  { tags: ["settings"] },
+  { tags: ["settings"], revalidate: 60 },
 );
 
 /** Invalidasi langsung (blocking) agar perubahan admin tampil segera. */

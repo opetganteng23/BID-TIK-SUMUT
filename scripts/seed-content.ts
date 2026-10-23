@@ -57,6 +57,16 @@ async function main() {
     if (!s.tagline) s.tagline = "Bidang Teknologi Informasi dan Komunikasi Polda Sumatera Utara";
     if (!s.orgName) s.orgName = "Bid TIK Polda Sumatera Utara";
     if (!s.footer?.about) s.set("footer.about", ABOUT);
+    if (!s.footer?.phones?.length) s.set("footer.phones", ["110 (Call Center Polri, layanan darurat)"]);
+    if (!s.footer?.quickLinks?.length) {
+      s.set("footer.quickLinks", [
+        { label: "Berita", href: "/berita" },
+        { label: "Layanan", href: "/layanan" },
+        { label: "Ajukan pengaduan", href: "/pengaduan" },
+        { label: "Lacak pengaduan", href: "/pengaduan/lacak" },
+        { label: "Kontak", href: "/kontak" },
+      ]);
+    }
     if (!s.marquees?.length) {
       s.marquees = [
         { id: "info-1", after: "hero", enabled: true, speed: 45, direction: "left", height: 56, items: RUNNING_TEXT.map((text) => ({ type: "text", text })) },
