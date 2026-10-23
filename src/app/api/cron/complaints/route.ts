@@ -3,7 +3,7 @@ import { ApiError, ok, route } from "@/lib/http";
 import { connectDb } from "@/lib/db";
 import { env } from "@/lib/env";
 import { Complaint, ComplaintAttachment, ComplaintMessage, ComplaintStatusHistory, ReporterSession } from "@/lib/models";
-import { applyTransition } from "@/lib/complaint-service";
+import { autoCloseDue } from "@/lib/complaint-service";
 import { audit } from "@/lib/audit";
 
 export const maxDuration = 60;
@@ -30,30 +30,7 @@ export const GET = route(async ({ req, requestId }) => {
   if (!authorized(req)) throw new ApiError("UNAUTHENTICATED");
   await connectDb();
   const now = new Date();
-  const due = await Complaint.find(
-    { status: "awaiting_reporter_confirmation", confirmationDeadlineAt: { $lte: now } },
-    "_id",
-  )
-    .limit(500)
-    .lean();
-
-  let closed = 0;
-  let skipped = 0;
-  for (const c of due) {
-    try {
-      await applyTransition({
-        complaintId: c._id,
-        to: "closed",
-        actor: "system",
-        closureReason: "auto_closed_no_reporter_response",
-        deadlineBefore: now,
-      });
-      closed++;
-    } catch (e) {
-      if (e instanceof ApiError && e.code === "CONFLICT") skipped++; // pelapor merespons lebih dulu
-      else throw e;
-    }
-  }
+  const { closed, skipped } = await autoCloseDue();
 
   const cutoff = new Date(now.getTime() - RETENTION_DAYS * 24 * 60 * 60_000);
   const old = await Complaint.find({ createdAt: { $lt: cutoff } }, "_id").limit(500).lean();

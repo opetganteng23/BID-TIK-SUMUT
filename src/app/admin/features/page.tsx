@@ -45,11 +45,16 @@ export default async function Page() {
         endpoint="/api/admin/features"
         fields={fields}
         searchable
+        filters={[
+          { name: "category", label: "Kategori", optionsUrl: "/api/admin/feature-categories" },
+          { name: "enabled", label: "Status", options: [{ value: "true", label: "Aktif" }, { value: "false", label: "Nonaktif" }] },
+        ]}
         preview={{ base: "/fitur/", key: "slug" }}
         columns={[
-          { key: "title", label: "Judul" },
+          { key: "title", label: "Judul", sort: "title" },
           { key: "category.name", label: "Kategori" },
-          { key: "enabled", label: "Status", kind: "status" },
+          { key: "order", label: "Urutan", sort: "order" },
+          { key: "enabled", label: "Status", kind: "status", sort: "enabled" },
         ]}
       />
     </div>

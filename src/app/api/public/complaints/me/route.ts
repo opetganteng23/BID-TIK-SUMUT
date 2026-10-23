@@ -1,11 +1,12 @@
 import { ApiError, ok, route } from "@/lib/http";
 import { connectDb } from "@/lib/db";
 import { Complaint, ComplaintStatusHistory } from "@/lib/models";
-import { requireReporter } from "@/lib/complaint-service";
+import { autoCloseDue, requireReporter } from "@/lib/complaint-service";
 import { STATUS_LABEL, type ComplaintStatus } from "@/lib/complaint-state";
 
 export const GET = route(async ({ requestId }) => {
   const id = await requireReporter();
+  await autoCloseDue({ complaintId: id });
   await connectDb();
   const c = await Complaint.findById(id).populate("categoryId", "name").lean();
   if (!c) throw new ApiError("NOT_FOUND");

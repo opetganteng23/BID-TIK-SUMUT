@@ -130,3 +130,28 @@ export async function applyTransition(opts: {
   });
   return updated;
 }
+
+/**
+ * Menutup tiket yang melewati tenggat 7 hari. Idempoten dan atomik per tiket (lihat applyTransition).
+ * Dipanggil oleh cron dan secara oportunistik saat tiket dibuka, agar keterlambatan scheduler
+ * (mis. cron harian di paket Hobby) tidak terlihat pengguna.
+ */
+export async function autoCloseDue(opts: { complaintId?: Types.ObjectId; limit?: number } = {}) {
+  await connectDb();
+  const now = new Date();
+  const filter: Record<string, unknown> = { status: "awaiting_reporter_confirmation", confirmationDeadlineAt: { $lte: now } };
+  if (opts.complaintId) filter._id = opts.complaintId;
+  const due = await Complaint.find(filter, "_id").limit(opts.limit ?? 500).lean();
+  let closed = 0;
+  let skipped = 0;
+  for (const c of due) {
+    try {
+      await applyTransition({ complaintId: c._id, to: "closed", actor: "system", closureReason: "auto_closed_no_reporter_response", deadlineBefore: now });
+      closed++;
+    } catch (e) {
+      if (e instanceof ApiError && e.code === "CONFLICT") skipped++; // pelapor merespons lebih dulu
+      else throw e;
+    }
+  }
+  return { closed, skipped };
+}

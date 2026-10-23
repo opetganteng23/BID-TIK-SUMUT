@@ -20,6 +20,9 @@ function sanitizeBody(data: Record<string, any>) {
 export const hero = crud({
   model: HeroSlide as any,
   entity: "hero",
+  searchField: "title",
+  sortable: ["order", "title", "mediaType", "enabled", "createdAt"],
+  filterable: ["enabled", "mediaType"],
   readPermission: "content.manage",
   writePermission: "content.manage",
   schema: heroSchema,
@@ -36,6 +39,8 @@ export const hero = crud({
 export const features = crud({
   model: Feature as any,
   entity: "feature",
+  sortable: ["title", "order", "enabled", "createdAt"],
+  filterable: ["enabled", "category"],
   readPermission: "content.manage",
   writePermission: "content.manage",
   schema: featureSchema,
@@ -50,6 +55,8 @@ export const features = crud({
 export const featureCategories = crud({
   model: FeatureCategory as any,
   entity: "feature_category",
+  searchField: "name",
+  sortable: ["name", "order", "createdAt"],
   readPermission: "content.manage",
   writePermission: "content.manage",
   schema: featureCategorySchema,
@@ -66,6 +73,8 @@ export const featureCategories = crud({
 export const newsCategories = crud({
   model: NewsCategory as any,
   entity: "news_category",
+  searchField: "name",
+  sortable: ["name", "createdAt"],
   readPermission: "news.write",
   writePermission: "content.manage",
   schema: newsCategorySchema,
@@ -82,6 +91,8 @@ export const newsCategories = crud({
 export const pages = crud({
   model: Page as any,
   entity: "page",
+  sortable: ["title", "slug", "enabled", "updatedAt", "createdAt"],
+  filterable: ["enabled"],
   readPermission: "content.manage",
   writePermission: "content.manage",
   schema: pageSchema,
@@ -95,6 +106,9 @@ export const pages = crud({
 export const complaintCategories = crud({
   model: ComplaintCategory as any,
   entity: "complaint_category",
+  searchField: "name",
+  sortable: ["name", "order", "active", "createdAt"],
+  filterable: ["active"],
   readPermission: "complaints.view",
   writePermission: "complaints.categories.manage",
   schema: complaintCategorySchema,

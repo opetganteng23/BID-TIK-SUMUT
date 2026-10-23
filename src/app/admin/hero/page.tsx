@@ -56,11 +56,16 @@ export default async function Page() {
       endpoint="/api/admin/hero"
       fields={fields}
       reorderable
+      searchable
+      filters={[
+        { name: "enabled", label: "Status", options: [{ value: "true", label: "Aktif" }, { value: "false", label: "Nonaktif" }] },
+        { name: "mediaType", label: "Jenis media", options: [{ value: "image", label: "Gambar" }, { value: "video", label: "Video" }, { value: "embed", label: "Embed" }] },
+      ]}
       preview={{ base: "/" }}
       columns={[
-        { key: "title", label: "Judul" },
-        { key: "mediaType", label: "Media" },
-        { key: "enabled", label: "Status", kind: "status" },
+        { key: "title", label: "Judul", sort: "title" },
+        { key: "mediaType", label: "Media", sort: "mediaType" },
+        { key: "enabled", label: "Status", kind: "status", sort: "enabled" },
       ]}
     />
   );

@@ -5,21 +5,33 @@ import { User } from "@/lib/models";
 import { requireUser } from "@/lib/auth/session";
 import { hashPassword, passwordSchema } from "@/lib/auth/password";
 import { audit } from "@/lib/audit";
+import { buildSort, pickFilters, tableQuery } from "@/lib/listing";
+import { escapeRegex } from "@/lib/crud";
+import { assertCanManageUser } from "@/lib/user-policy";
 
 const PUBLIC_FIELDS = { passwordHash: 0, failedLogins: 0 };
-
-const query = z.object({
-  page: z.coerce.number().int().min(1).max(10_000).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
+const SORTABLE = ["name", "email", "role", "isActive", "lastLoginAt", "createdAt"] as const;
+const FILTERABLE = ["role", "isActive"] as const;
 
 export const GET = route(async ({ req, requestId }) => {
   await requireUser("users.manage");
-  const { page, limit } = parseQuery(req, query);
+  const { page, limit, q, sort, dir } = parseQuery(req, tableQuery);
+  const filter: Record<string, unknown> = { ...pickFilters(req, FILTERABLE) };
+  if (filter.role !== undefined && !["super_admin", "admin", "editor"].includes(String(filter.role))) {
+    throw new ApiError("VALIDATION_ERROR", undefined, { role: "Peran tidak valid." });
+  }
+  if (q) {
+    const re = { $regex: escapeRegex(q), $options: "i" };
+    filter.$or = [{ name: re }, { email: re }];
+  }
   await connectDb();
   const [items, total] = await Promise.all([
-    User.find({}, PUBLIC_FIELDS).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
-    User.countDocuments(),
+    User.find(filter, PUBLIC_FIELDS)
+      .sort(buildSort(sort, dir, SORTABLE, { createdAt: -1 }))
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    User.countDocuments(filter),
   ]);
   return ok({ items, total, page, limit }, requestId);
 });
@@ -37,6 +49,7 @@ export const POST = route(async ({ req, requestId }) => {
   assertSameOrigin(req);
   const actor = await requireUser("users.manage");
   const input = await readJson(req, create, 10_000);
+  assertCanManageUser(actor.role, input.role, input.role);
   await connectDb();
   const email = input.email.toLowerCase();
   if (await User.exists({ email })) throw new ApiError("CONFLICT", "Email sudah terdaftar.", { email: "Email sudah terdaftar." });
@@ -58,3 +71,4 @@ export const POST = route(async ({ req, requestId }) => {
   });
   return ok({ id: String(user._id), email, role: user.role }, requestId, 201);
 });
+

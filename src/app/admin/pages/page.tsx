@@ -12,6 +12,7 @@ export default async function Page() {
       noun="halaman"
       endpoint="/api/admin/pages"
       searchable
+      filters={[{ name: "enabled", label: "Status", options: [{ value: "true", label: "Aktif" }, { value: "false", label: "Nonaktif" }] }]}
       preview={{ base: "/", key: "slug" }}
       fields={[
         { type: "text", name: "title", label: "Judul", required: true, maxLength: 160 },
@@ -20,9 +21,9 @@ export default async function Page() {
         { type: "checkbox", name: "enabled", label: "Aktif" },
       ]}
       columns={[
-        { key: "title", label: "Judul" },
-        { key: "slug", label: "Slug", kind: "path" },
-        { key: "enabled", label: "Status", kind: "status" },
+        { key: "title", label: "Judul", sort: "title" },
+        { key: "slug", label: "Slug", kind: "path", sort: "slug" },
+        { key: "enabled", label: "Status", kind: "status", sort: "enabled" },
       ]}
     />
   );

@@ -9,6 +9,8 @@ import { safeCell } from "@/lib/xlsx-safe";
 import { phoneSchema, createComplaintSchema } from "@/lib/complaint-schemas";
 import { matchesSignature } from "@/lib/media";
 import { assertNoOperators } from "@/lib/http";
+import { assertCanManageUser } from "@/lib/user-policy";
+import { buildSort } from "@/lib/listing";
 
 describe("news state machine", () => {
   it("editor can submit own draft but cannot publish or approve", () => {
@@ -109,11 +111,21 @@ describe("rbac", () => {
     expect(can("editor", "news.manage_others")).toBe(false);
     expect(can("editor", "complaints.export")).toBe(false);
     expect(can("admin", "news.raw")).toBe(false);
-    expect(can("admin", "users.manage")).toBe(false);
+    expect(can("admin", "users.manage")).toBe(true);
+    expect(can("editor", "users.manage")).toBe(false);
     expect(can("admin", "complaints.export")).toBe(true);
     expect(can("admin", "complaints.export_sensitive")).toBe(false);
     expect(can("super_admin", "news.raw")).toBe(true);
     expect(can("super_admin", "complaints.export_sensitive")).toBe(true);
+  });
+});
+
+describe("user policy", () => {
+  it("admin tidak boleh menyentuh atau memberi peran super_admin", () => {
+    expect(() => assertCanManageUser("admin", "super_admin")).toThrow();
+    expect(() => assertCanManageUser("admin", "editor", "super_admin")).toThrow();
+    expect(() => assertCanManageUser("admin", "editor", "admin")).not.toThrow();
+    expect(() => assertCanManageUser("super_admin", "super_admin", "admin")).not.toThrow();
   });
 });
 
@@ -145,6 +157,11 @@ describe("helpers", () => {
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: true }).success).toBe(true);
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: false }).success).toBe(false);
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: true, status: "closed" }).success).toBe(false);
+  });
+  it("buildSort hanya menerima kolom whitelist", () => {
+    expect(buildSort("name", "desc", ["name"], { x: 1 })).toEqual({ name: -1, _id: -1 });
+    expect(buildSort(undefined, undefined, ["name"], { x: 1 })).toEqual({ x: 1 });
+    expect(() => buildSort("passwordHash", "asc", ["name"], { x: 1 })).toThrow();
   });
   it("checks magic bytes", () => {
     const png = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0]);

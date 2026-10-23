@@ -7,6 +7,7 @@ import { Eye, Pencil, Plus } from "lucide-react";
 import { ApiClientError, api, formatDate } from "@/components/api";
 import { Button, Card, Checkbox, EmptyState, Notice, SelectInput, Skeleton, TextArea, TextInput } from "@/components/ui";
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
+import { Pager, SortTh, useSort } from "@/components/admin/table";
 import { FieldInput } from "@/components/admin/ResourceManager";
 import { ImageField } from "@/components/admin/MediaPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
@@ -43,6 +44,8 @@ export function NewsManager({ role, userId, initialStatus }: { role: Role; userI
   const [status, setStatus] = useState(initialStatus ?? "");
   const [q, setQ] = useState("");
   const [cats, setCats] = useState<{ value: string; label: string }[]>([]);
+  const [catFilter, setCatFilter] = useState("");
+  const sorter = useSort({ sort: "updatedAt", dir: "desc" });
   const [error, setError] = useState("");
   const [ok, setOk] = useState("");
 
@@ -60,14 +63,14 @@ export function NewsManager({ role, userId, initialStatus }: { role: Role; userI
 
   const load = useCallback(async () => {
     try {
-      const d = await api<{ items: any[]; total: number }>(`/api/admin/news?page=${page}&limit=20${status ? `&status=${status}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
+      const d = await api<{ items: any[]; total: number }>(`/api/admin/news?page=${page}&limit=20${status ? `&status=${status}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}${catFilter ? `&category=${catFilter}` : ""}${sorter.query}`);
       setRows(d.items);
       setTotal(d.total);
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : "Gagal memuat berita.");
       setRows([]);
     }
-  }, [page, status, q]);
+  }, [page, status, q, catFilter, sorter.query]);
 
   useEffect(() => {
     const t = setTimeout(() => void load(), 250);
@@ -348,20 +351,30 @@ export function NewsManager({ role, userId, initialStatus }: { role: Role; userI
       </div>
       {ok && <Notice kind="success">{ok}</Notice>}
       {error && <Notice kind="error">{error}</Notice>}
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <TextInput id="n-q" label="Cari judul" value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />
         <SelectInput id="n-st" label="Status" value={status} onChange={(e) => { setPage(1); setStatus(e.target.value); }} options={[{ value: "", label: "Semua" }, ...Object.entries(STATUS_LABEL).map(([value, label]) => ({ value, label }))]} />
+        <SelectInput id="n-cat-f" label="Kategori" value={catFilter} onChange={(e) => { setPage(1); setCatFilter(e.target.value); }} options={[{ value: "", label: "Semua" }, ...cats]} />
+        {(q || status || catFilter || sorter.state?.sort !== "updatedAt" || sorter.state?.dir !== "desc") && <div className="flex items-end"><Button variant="secondary" onClick={() => { setQ(""); setStatus(""); setCatFilter(""); sorter.reset(); setPage(1); }}>Reset filter dan urutan</Button></div>}
       </div>
       {rows === null ? <Skeleton className="h-48" /> : rows.length === 0 ? <EmptyState title="Belum ada berita">Klik &quot;Berita baru&quot; untuk memulai.</EmptyState> : (
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Daftar berita</caption>
-            <thead className="border-b border-border bg-surface-2"><tr>{["Judul", "Status", "Penulis", "Diperbarui", "Aksi"].map((h) => <th key={h} scope="col" className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
+            <thead className="border-b border-border bg-surface-2"><tr>
+              <SortTh label="Judul" field="title" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <SortTh label="Status" field="status" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <SortTh label="Kategori" state={sorter.state} onSort={() => {}} />
+              <SortTh label="Penulis" state={sorter.state} onSort={() => {}} />
+              <SortTh label="Diperbarui" field="updatedAt" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <th scope="col" className="px-4 py-3 text-right font-medium">Aksi</th>
+            </tr></thead>
             <tbody>
               {rows.map((r) => (
                 <tr key={r._id} className="border-b border-border last:border-0">
                   <td className="px-4 py-3 font-medium">{r.title}</td>
                   <td className="px-4 py-3">{STATUS_LABEL[r.status as NewsStatus]}</td>
+                  <td className="px-4 py-3">{r.category?.name ?? "-"}</td>
                   <td className="px-4 py-3">{r.authorNameSnapshot}</td>
                   <td className="whitespace-nowrap px-4 py-3">{formatDate(r.updatedAt, true)}</td>
                   <td className="px-4 py-2"><button type="button" onClick={() => open(r._id)} className="inline-flex size-11 items-center justify-center rounded-full hover:bg-surface-2" aria-label={`Buka ${r.title}`}><Pencil className="size-4" aria-hidden /></button></td>
@@ -371,13 +384,7 @@ export function NewsManager({ role, userId, initialStatus }: { role: Role; userI
           </table>
         </div>
       )}
-      {total > 20 && (
-        <nav aria-label="Paginasi" className="flex items-center justify-between">
-          <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Sebelumnya</Button>
-          <span className="text-sm text-muted">Halaman {page} dari {Math.ceil(total / 20)}</span>
-          <Button variant="secondary" disabled={page * 20 >= total} onClick={() => setPage((p) => p + 1)}>Berikutnya</Button>
-        </nav>
-      )}
+      <Pager page={page} total={total} limit={20} onPage={setPage} />
     </div>
   );
 }

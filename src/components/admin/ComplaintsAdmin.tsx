@@ -7,6 +7,7 @@ import { Download, HandHelping, Send } from "lucide-react";
 import { ApiClientError, api, formatDate } from "@/components/api";
 import { Button, Card, Checkbox, EmptyState, Notice, SelectInput, Skeleton, TextArea, TextInput } from "@/components/ui";
 import { STATUS_LABEL, type ComplaintStatus } from "@/lib/complaint-state";
+import { Pager, SortTh, useSort } from "@/components/admin/table";
 import { can, type Role } from "@/lib/rbac";
 
 const SUMMARY_KEYS: ComplaintStatus[] = ["submitted", "in_progress", "waiting_reporter", "awaiting_reporter_confirmation", "closed"];
@@ -24,6 +25,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
   const [to, setTo] = useState("");
   const [cats, setCats] = useState<{ value: string; label: string }[]>([]);
   const [error, setError] = useState("");
+  const sorter = useSort({ sort: "createdAt", dir: "desc" });
   const [exporting, setExporting] = useState(false);
   const [identity, setIdentity] = useState(false);
 
@@ -43,12 +45,13 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
       const p = params();
       p.set("page", String(page));
       p.set("limit", "20");
+      if (sorter.state) { p.set("sort", sorter.state.sort); p.set("dir", sorter.state.dir); }
       setData(await api<any>(`/api/admin/complaints?${p}`));
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : "Gagal memuat pengaduan.");
       setData({ items: [], total: 0, summary: {} });
     }
-  }, [params, page]);
+  }, [params, page, sorter.state]);
 
   useEffect(() => {
     const t = setTimeout(() => void load(), 250);
@@ -85,7 +88,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
     }
   }
 
-  const reset = () => { setStatus(""); setCat(""); setMine(""); setQ(""); setFrom(""); setTo(""); setPage(1); };
+  const reset = () => { setStatus(""); setCat(""); setMine(""); setQ(""); setFrom(""); setTo(""); sorter.reset(); setPage(1); };
 
   return (
     <div className="space-y-6">
@@ -130,7 +133,14 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
           <table className="w-full text-left text-sm">
             <caption className="sr-only">Daftar pengaduan</caption>
-            <thead className="border-b border-border bg-surface-2"><tr>{["Tiket", "Subjek", "Kategori", "Status", "Petugas", "Masuk"].map((h) => <th key={h} scope="col" className="px-4 py-3 font-medium">{h}</th>)}</tr></thead>
+            <thead className="border-b border-border bg-surface-2"><tr>
+              <SortTh label="Tiket" field="ticketNumber" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <SortTh label="Subjek" field="subject" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <SortTh label="Kategori" state={sorter.state} onSort={() => {}} />
+              <SortTh label="Status" field="status" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+              <SortTh label="Petugas" state={sorter.state} onSort={() => {}} />
+              <SortTh label="Masuk" field="createdAt" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
+            </tr></thead>
             <tbody>
               {data.items.map((c: any) => (
                 <tr key={c._id} className="border-b border-border last:border-0">
@@ -146,13 +156,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
           </table>
         </div>
       )}
-      {data && data.total > 20 && (
-        <nav aria-label="Paginasi" className="flex items-center justify-between">
-          <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Sebelumnya</Button>
-          <span className="text-sm text-muted">Halaman {page} dari {Math.ceil(data.total / 20)}</span>
-          <Button variant="secondary" disabled={page * 20 >= data.total} onClick={() => setPage((p) => p + 1)}>Berikutnya</Button>
-        </nav>
-      )}
+      {data && <Pager page={page} total={data.total} limit={20} onPage={setPage} />}
     </div>
   );
 }

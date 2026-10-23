@@ -12,12 +12,13 @@ export default async function Page() {
       noun="kategori"
       endpoint="/api/admin/feature-categories"
       reorderable
+      searchable
       fields={[
         { type: "text", name: "name", label: "Nama", required: true, maxLength: 80 },
         { type: "text", name: "slug", label: "Slug (opsional)" },
       ]}
       columns={[
-        { key: "name", label: "Nama" },
+        { key: "name", label: "Nama", sort: "name" },
         { key: "slug", label: "Slug" },
       ]}
     />

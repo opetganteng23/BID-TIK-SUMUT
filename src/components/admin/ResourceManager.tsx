@@ -8,6 +8,7 @@ import { Button, Card, Checkbox, EmptyState, Notice, SelectInput, Skeleton, Text
 import { ConfirmDialog } from "@/components/admin/ConfirmDialog";
 import { ImageField } from "@/components/admin/MediaPicker";
 import { RichTextEditor } from "@/components/admin/RichTextEditor";
+import { Pager, SortTh, useSort } from "@/components/admin/table";
 
 export type Field =
   | { type: "text" | "textarea" | "number" | "url"; name: string; label: string; required?: boolean; hint?: string; maxLength?: number; placeholder?: string }
@@ -18,7 +19,8 @@ export type Field =
   | { type: "lines"; name: string; label: string; hint?: string }
   | { type: "repeater"; name: string; label: string; max: number; fields: Field[]; addLabel?: string };
 
-export type Column = { key: string; label: string; kind?: "status" | "path" };
+export type Column = { key: string; label: string; kind?: "status" | "path"; /** Nama kolom server untuk pengurutan. Kosong = tidak dapat diurutkan. */ sort?: string };
+export type TableFilter = { name: string; label: string; options?: { value: string; label: string }[]; optionsUrl?: string };
 
 function cell(c: Column, row: any): React.ReactNode {
   const v = c.key.split(".").reduce((o: any, k) => (o == null ? o : o[k]), row);
@@ -34,6 +36,7 @@ type Props = {
   columns: Column[];
   noun: string;
   searchable?: boolean;
+  filters?: TableFilter[];
   reorderable?: boolean;
   /** Tautan pratinjau: base saja (mis. "/") atau base + nilai kolom `key` (mis. "/fitur/" + slug). */
   preview?: { base: string; key?: string };
@@ -154,7 +157,7 @@ export function FieldInput({ f, v, set, errors, path, options }: { f: Field; v: 
   }
 }
 
-export function ResourceManager({ title, endpoint, fields, columns, noun, searchable, reorderable, preview, canWrite = true, defaults }: Props) {
+export function ResourceManager({ title, endpoint, fields, columns, noun, searchable, filters, reorderable, preview, canWrite = true, defaults }: Props) {
   const previewHref = (row: any) => (preview ? (preview.key ? `${preview.base}${row[preview.key]}` : preview.base) : null);
   const [rows, setRows] = useState<any[] | null>(null);
   const [total, setTotal] = useState(0);
@@ -171,19 +174,34 @@ export function ResourceManager({ title, endpoint, fields, columns, noun, search
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [options, setOptions] = useState<Record<string, { value: string; label: string }[]>>({});
   const limit = reorderable ? 100 : 20;
+  const sorter = useSort(null);
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+  const [filterOptions, setFilterOptions] = useState<Record<string, { value: string; label: string }[]>>({});
+  const filterQuery = Object.entries(filterValues).filter(([, v]) => v).map(([k, v]) => `&${k}=${encodeURIComponent(v)}`).join("");
 
   const selectUrls = useMemo(() => fields.filter((f): f is Extract<Field, { type: "select" }> => f.type === "select" && !!f.optionsUrl), [fields]);
 
   const load = useCallback(async () => {
     try {
-      const d = await api<{ items: any[]; total: number }>(`${endpoint}?page=${page}&limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}`);
+      const d = await api<{ items: any[]; total: number }>(`${endpoint}?page=${page}&limit=${limit}${q ? `&q=${encodeURIComponent(q)}` : ""}${sorter.query}${filterQuery}`);
       setRows(d.items);
       setTotal(d.total);
     } catch (e) {
       setError(e instanceof ApiClientError ? e.message : "Gagal memuat data.");
       setRows([]);
     }
-  }, [endpoint, page, q, limit]);
+  }, [endpoint, page, q, limit, sorter.query, filterQuery]);
+
+  useEffect(() => {
+    (filters ?? []).filter((f) => f.optionsUrl).forEach(async (f) => {
+      try {
+        const d = await api<{ items: any[] }>(`${f.optionsUrl}?limit=100`);
+        setFilterOptions((o) => ({ ...o, [f.name]: d.items.map((i) => ({ value: i._id, label: i.name ?? i.title })) }));
+      } catch {
+        /* opsi filter gagal dimuat */
+      }
+    });
+  }, [filters]);
 
   useEffect(() => {
     const t = setTimeout(() => void load(), 200);
@@ -317,8 +335,16 @@ export function ResourceManager({ title, endpoint, fields, columns, noun, search
         </Card>
       )}
 
-      {searchable && (
-        <TextInput id="res-search" label={`Cari ${noun}`} value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />
+      {(searchable || (filters && filters.length > 0)) && (
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {searchable && <TextInput id="res-search" label={`Cari ${noun}`} value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />}
+          {(filters ?? []).map((f) => (
+            <SelectInput key={f.name} id={`flt-${f.name}`} label={f.label} value={filterValues[f.name] ?? ""} onChange={(e) => { setPage(1); setFilterValues((v) => ({ ...v, [f.name]: e.target.value })); }} options={[{ value: "", label: "Semua" }, ...(f.options ?? filterOptions[f.name] ?? [])]} />
+          ))}
+          {(q || filterQuery || sorter.state) && (
+            <div className="flex items-end"><Button variant="secondary" onClick={() => { setQ(""); setFilterValues({}); sorter.reset(); setPage(1); }}>Reset filter dan urutan</Button></div>
+          )}
+        </div>
       )}
 
       {rows === null ? (
@@ -331,7 +357,7 @@ export function ResourceManager({ title, endpoint, fields, columns, noun, search
             <caption className="sr-only">{title}</caption>
             <thead className="border-b border-border bg-surface-2">
               <tr>
-                {columns.map((c) => <th key={c.key} scope="col" className="px-4 py-3 font-medium">{c.label}</th>)}
+                {columns.map((c) => <SortTh key={c.key} label={c.label} field={c.sort} state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />)}
                 <th scope="col" className="px-4 py-3 text-right font-medium">Aksi</th>
               </tr>
             </thead>
@@ -341,7 +367,7 @@ export function ResourceManager({ title, endpoint, fields, columns, noun, search
                   {columns.map((c) => <td key={c.key} className="px-4 py-3 align-middle">{cell(c, r)}</td>)}
                   <td className="px-4 py-2">
                     <div className="flex flex-wrap justify-end gap-1">
-                      {reorderable && canWrite && (
+                      {reorderable && canWrite && !sorter.state && !filterQuery && !q && (
                         <>
                           <button type="button" onClick={() => move(i, -1)} disabled={i === 0} className="inline-flex size-11 items-center justify-center rounded-full hover:bg-surface-2 disabled:opacity-30" aria-label={`Naikkan ${noun} ${i + 1}`}><ArrowUp className="size-4" aria-hidden /></button>
                           <button type="button" onClick={() => move(i, 1)} disabled={i === rows.length - 1} className="inline-flex size-11 items-center justify-center rounded-full hover:bg-surface-2 disabled:opacity-30" aria-label={`Turunkan ${noun} ${i + 1}`}><ArrowDown className="size-4" aria-hidden /></button>
@@ -359,13 +385,7 @@ export function ResourceManager({ title, endpoint, fields, columns, noun, search
         </div>
       )}
 
-      {!reorderable && total > limit && (
-        <nav aria-label="Paginasi" className="flex items-center justify-between">
-          <Button variant="secondary" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Sebelumnya</Button>
-          <span className="text-sm text-muted">Halaman {page} dari {Math.ceil(total / limit)}</span>
-          <Button variant="secondary" disabled={page * limit >= total} onClick={() => setPage((p) => p + 1)}>Berikutnya</Button>
-        </nav>
-      )}
+      {!reorderable && <Pager page={page} total={total} limit={limit} onPage={setPage} />}
 
       <ConfirmDialog open={!!toDelete} title={`Hapus ${noun}?`} busy={saving} onConfirm={remove} onCancel={() => setToDelete(null)}>
         Tindakan ini permanen dan tidak dapat dibatalkan.

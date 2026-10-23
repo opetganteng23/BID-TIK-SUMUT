@@ -40,6 +40,7 @@ const ALL: Permission[] = [
 const MATRIX: Record<Role, ReadonlySet<Permission>> = {
   super_admin: new Set(ALL),
   admin: new Set<Permission>([
+    "users.manage",
     "settings.layout",
     "content.manage",
     "news.write",

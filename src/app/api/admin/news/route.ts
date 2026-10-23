@@ -9,26 +9,23 @@ import { audit } from "@/lib/audit";
 import { newsSchema } from "@/lib/schemas";
 import { prepareNewsContent, uniqueNewsSlug } from "@/lib/news-service";
 import { escapeRegex } from "@/lib/crud";
+import { buildSort, pickFilters, tableQuery } from "@/lib/listing";
 
-const query = z.object({
-  page: z.coerce.number().int().min(1).max(10_000).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  q: z.string().max(100).optional(),
-  status: z.enum(["draft", "review", "scheduled", "published", "archived"]).optional(),
-});
+const query = tableQuery.extend({ status: z.enum(["draft", "review", "scheduled", "published", "archived"]).optional() });
+const SORTABLE = ["title", "status", "updatedAt", "createdAt", "publishedAt"] as const;
 
 export const GET = route(async ({ req, requestId }) => {
   const user = await requireUser("news.write");
-  const { page, limit, q, status } = parseQuery(req, query);
+  const { page, limit, q, status, sort, dir } = parseQuery(req, query);
   await connectDb();
-  const filter: Record<string, unknown> = {};
+  const filter: Record<string, unknown> = { ...pickFilters(req, ["category"]) };
   if (q) filter.title = { $regex: escapeRegex(q), $options: "i" };
   if (status) filter.status = status;
   // Editor hanya melihat berita miliknya sendiri.
   if (!can(user.role, "news.manage_others")) filter.authorId = user.id;
   const [items, total] = await Promise.all([
     News.find(filter, { contentJson: 0, contentHtml: 0, rawHtml: 0 })
-      .sort({ updatedAt: -1 })
+      .sort(buildSort(sort, dir, SORTABLE, { updatedAt: -1 }))
       .skip((page - 1) * limit)
       .limit(limit)
       .populate("category", "name")

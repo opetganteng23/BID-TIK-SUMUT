@@ -105,7 +105,6 @@ async function main() {
   const editor = (await login(`editor-${unique}@example.test`, PASS)).c;
   const editor2 = (await login(`editor2-${unique}@example.test`, PASS)).c;
   check("editor tidak bisa kelola pengguna", (await editor.get("/api/admin/users")).status === 403);
-  check("admin tidak bisa kelola pengguna", (await admin.get("/api/admin/users")).status === 403);
   check("super admin bisa kelola pengguna", (await sa.c.get("/api/admin/users")).status === 200);
   check("editor tidak bisa ubah hero", (await editor.post("/api/admin/hero", { title: "x", mediaType: "image" })).status === 403);
   check("editor tidak bisa baca pesan kontak", (await editor.get("/api/admin/messages")).status === 403);
@@ -365,6 +364,53 @@ async function main() {
   check("akun terkunci setelah 5 kali gagal", fails.slice(0, 5).every((s) => s === 401) && fails[5] === 429, fails);
   const lockedLogin = await new Client().post("/api/auth/login", { email: lockEmail, password: PASS });
   check("akun terkunci menolak password benar", lockedLogin.status === 429);
+
+  console.log("13a. Manajemen pengguna oleh Admin, sort, filter, search");
+  const userList = (r: any) => r.json.data.items as any[];
+  const alist = await admin.get("/api/admin/users?limit=100");
+  check("admin bisa melihat daftar pengguna", alist.status === 200 && userList(alist).length >= 5, alist.status);
+  check("daftar pengguna tanpa passwordHash", !JSON.stringify(alist.json).includes("passwordHash"));
+  const sas = userList(alist).find((u) => u.role === "super_admin");
+  const byEmail = (e: string) => userList(alist).find((u) => u.email === e);
+  check("admin tidak bisa membuat Super Admin", (await admin.post("/api/admin/users", { name: "Eskalasi", email: `esk-${unique}@example.test`, role: "super_admin", password: "PasswordSementara-1" })).status === 403);
+  check("admin tidak bisa mengubah peran jadi Super Admin", (await admin.patch(`/api/admin/users/${byEmail(`editor2-${unique}@example.test`)._id}`, { role: "super_admin" })).status === 403);
+  check(
+    "admin tidak bisa reset/nonaktifkan/hapus Super Admin",
+    (await admin.patch(`/api/admin/users/${sas._id}`, { resetPassword: "PasswordBaru-123456" })).status === 403 &&
+      (await admin.patch(`/api/admin/users/${sas._id}`, { isActive: false })).status === 403 &&
+      (await admin.req("DELETE", `/api/admin/users/${sas._id}`)).status === 403,
+  );
+  const mk = await admin.post("/api/admin/users", { name: "Dibuat Admin", email: `dibuat-${unique}@example.test`, role: "editor", password: "PasswordSementara-1" });
+  check("admin bisa membuat Editor", mk.status === 201, mk.json);
+  const mkId = mk.json.data.id as string;
+  check("admin bisa ubah nama, email, peran", (await admin.patch(`/api/admin/users/${mkId}`, { name: "Nama Baru", email: `baru2-${unique}@example.test`, role: "admin" })).status === 200);
+  check("email duplikat 409", (await admin.patch(`/api/admin/users/${mkId}`, { email: `admin-${unique}@example.test` })).status === 409);
+  check("admin bisa reset password pengguna", (await admin.patch(`/api/admin/users/${mkId}`, { resetPassword: "PasswordReset-12345" })).status === 200);
+  const relog = await login(`baru2-${unique}@example.test`, "PasswordReset-12345");
+  check("password hasil reset berlaku dan wajib diganti", relog.r.status === 200 && relog.r.json.data.mustChangePassword === true);
+  check("admin tidak bisa hapus akun sendiri", (await admin.req("DELETE", `/api/admin/users/${byEmail(`admin-${unique}@example.test`)._id}`)).status === 409);
+  check("editor tidak bisa kelola pengguna", (await editor.get("/api/admin/users")).status === 403 && (await editor.post("/api/admin/users", { name: "x", email: "x@example.test", role: "editor", password: "PasswordSementara-1" })).status === 403);
+  check("filter peran", userList(await admin.get("/api/admin/users?role=editor")).every((u) => u.role === "editor"));
+  check("filter status", userList(await admin.get("/api/admin/users?isActive=true")).every((u) => u.isActive === true));
+  const asc = userList(await admin.get("/api/admin/users?sort=email&dir=asc&limit=100")).map((u) => u.email);
+  const desc = userList(await admin.get("/api/admin/users?sort=email&dir=desc&limit=100")).map((u) => u.email);
+  check("sort email menaik dan menurun berkebalikan", JSON.stringify(asc) === JSON.stringify([...desc].reverse()) && asc.length > 3, asc.length);
+  check("kolom sort tidak valid ditolak", (await admin.get("/api/admin/users?sort=passwordHash")).status === 400);
+  check("search nama/email", userList(await admin.get(`/api/admin/users?q=baru2-${unique}`)).length === 1 && userList(await admin.get(`/api/admin/users?q=tidak-ada-${unique}`)).length === 0);
+  check("search aman dari regex injection", (await admin.get("/api/admin/users?q=" + encodeURIComponent(".*"))).status === 200);
+  check("operator $ di query ditolak", (await admin.get("/api/admin/users?$where=1")).status === 400);
+  check("paginasi", userList(await admin.get("/api/admin/users?limit=2&page=1")).length === 2 && userList(await admin.get("/api/admin/users?limit=2&page=2")).length >= 1);
+  check("admin bisa hapus pengguna", (await admin.req("DELETE", `/api/admin/users/${mkId}`)).status === 200 && (await admin.get(`/api/admin/users/${mkId}`)).status === 404);
+  const lastSa = await sa.c.req("DELETE", `/api/admin/users/${sas._id}`);
+  check("super admin tidak bisa menghapus dirinya sendiri", lastSa.status === 409, lastSa.status);
+  const audit2 = await sa.c.get("/api/admin/audit?action=user.");
+  check("aksi pengguna tercatat tanpa password", audit2.json.data.items.length >= 4 && !JSON.stringify(audit2.json).includes("PasswordReset-12345"));
+  check("audit: sort, filter entitas, search; sort liar ditolak", (await sa.c.get("/api/admin/audit?entity=user&sort=action&dir=asc&q=password")).status === 200 && (await sa.c.get("/api/admin/audit?sort=bogus")).status === 400);
+  check("crud: sort, filter, search", (await admin.get("/api/admin/hero?sort=title&dir=desc&enabled=true&q=Slide")).status === 200);
+  check("crud: sort di luar whitelist ditolak", (await admin.get("/api/admin/hero?sort=__v")).status === 400);
+  check("pesan: search dan sort", (await admin.get("/api/admin/messages?q=Pertanyaan&sort=subject&dir=asc")).status === 200);
+  check("berita: sort; kolom liar ditolak", (await admin.get("/api/admin/news?sort=title&dir=asc")).status === 200 && (await admin.get("/api/admin/news?sort=authorId")).status === 400);
+  check("pengaduan: sort; kolom liar ditolak", (await admin.get("/api/admin/complaints?sort=ticketNumber&dir=asc")).status === 200 && (await admin.get("/api/admin/complaints?sort=reporter")).status === 400);
 
   console.log("13b. Unggah gambar base64");
   const png64 = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196, 137]).toString("base64");

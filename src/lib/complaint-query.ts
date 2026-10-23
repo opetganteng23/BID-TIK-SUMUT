@@ -9,6 +9,8 @@ export const listQuery = z.object({
   page: z.coerce.number().int().min(1).max(10_000).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
   q: z.string().max(100).optional(),
+  sort: z.enum(["createdAt", "ticketNumber", "status", "subject", "updatedAt"]).optional(),
+  dir: z.enum(["asc", "desc"]).optional(),
   status: z.enum(STATUSES).optional(),
   categoryId: objectIdString.optional(),
   claimedBy: z.union([objectIdString, z.literal("me"), z.literal("none")]).optional(),

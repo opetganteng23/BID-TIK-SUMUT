@@ -8,6 +8,7 @@ import type { Permission } from "@/lib/rbac";
 import { audit } from "@/lib/audit";
 import { revalidate } from "@/lib/settings";
 import { isReservedSlug, slugify } from "@/lib/slug";
+import { buildSort, pickFilters, tableQuery } from "@/lib/listing";
 
 export function objectId(id: string): Types.ObjectId {
   if (!Types.ObjectId.isValid(id) || String(new Types.ObjectId(id)) !== id) {
@@ -27,6 +28,10 @@ type Options = {
   schema: z.ZodObject<any>;
   searchField?: string;
   sort?: Record<string, 1 | -1>;
+  /** Kolom yang boleh dipakai untuk pengurutan dari klien. */
+  sortable?: readonly string[];
+  /** Kolom yang boleh difilter (kesetaraan) dari klien. */
+  filterable?: readonly string[];
   tags?: string[];
   /** Kolom sumber slug, mis. "title" atau "name". Bila ada, slug dibuat dan dijaga unik. */
   slugFrom?: string;
@@ -37,11 +42,7 @@ type Options = {
   beforeDelete?: (id: Types.ObjectId) => Promise<void>;
 };
 
-const listQuery = z.object({
-  page: z.coerce.number().int().min(1).max(10_000).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-  q: z.string().max(100).optional(),
-});
+const listQuery = tableQuery;
 
 export function crud(o: Options) {
   const partial = o.schema.partial().strict();
@@ -69,14 +70,14 @@ export function crud(o: Options) {
   const collection = {
     GET: route(async ({ req, requestId }) => {
       await requireUser(o.readPermission);
-      const { page, limit, q } = parseQuery(req, listQuery);
+      const { page, limit, q, sort, dir } = parseQuery(req, listQuery);
       await connectDb();
-      const filter: Record<string, unknown> = {};
+      const filter: Record<string, unknown> = { ...pickFilters(req, o.filterable ?? []) };
       if (q && o.searchField) filter[o.searchField] = { $regex: escapeRegex(q), $options: "i" };
       const [items, total] = await Promise.all([
         o.model
           .find(filter)
-          .sort(o.sort ?? { createdAt: -1 })
+          .sort(buildSort(sort, dir, o.sortable ?? [], o.sort ?? { createdAt: -1 }))
           .skip((page - 1) * limit)
           .limit(limit)
           .populate(o.populate ?? "")

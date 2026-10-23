@@ -69,7 +69,7 @@ BASE_URL=http://localhost:3100 pnpm exec playwright test
 ## Risiko terbuka
 
 1. **Vercel membatasi body fungsi sekitar 4,5 MB.** Lampiran pengaduan diunggah satu berkas per permintaan dan dibatasi 4,4 MB di Vercel walau aturan produk 10 MB. Produksi butuh storage privat dengan pre-signed upload.
-2. **Cron 15 menit** (`vercel.json`) membutuhkan paket Vercel yang mendukungnya. Paket gratis hanya harian, jadi keterlambatan auto-close bisa hingga 24 jam. Dokumentasikan sebelum dipakai.
+2. **Cron harian (paket Hobby).** `vercel.json` memakai cron harian (02:00 UTC) karena Hobby tidak mengizinkan yang lebih sering. Untuk mengurangi keterlambatan auto-close, tiket yang lewat tenggat juga ditutup secara oportunistik saat pelapor membukanya dan saat admin membuka daftar pengaduan. Pada paket Pro, ubah jadwal menjadi `*/15 * * * *`.
 3. **Belum diuji dengan SMTP dan Vercel Blob sungguhan** (kredensial belum ada): kirim email dan unggah media baru terverifikasi sampai batas validasi dan penanganan error.
 4. Pengujian axe otomatis tidak menggantikan uji pembaca layar manual. Kualitas suara TTS bergantung perangkat.
 5. Semua gate di MTS Section 28 dan 29.14 (hosting resmi, privasi, retensi, VA/PT) tetap menunggu keputusan pemilik sistem.
