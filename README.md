@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Website BID TIK Polda Sumatera Utara (prototype)
 
-## Getting Started
+Implementasi MTS v2.2 (`../MTS-v2.2.md`): Next.js App Router + TypeScript, Tailwind v4, MongoDB (Mongoose), Nodemailer, Vercel Blob.
 
-First, run the development server:
+**Prototype.** Hanya konten publik. Modul Pengaduan hanya boleh diuji dengan data fiktif sampai gate rilis MTS Section 29.14 disetujui.
+
+## Mulai cepat
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env.local     # isi nilainya (lihat tabel di bawah)
+pnpm seed                      # Super Admin awal, pengaturan, kategori pengaduan
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Login di `/admin/login` dengan akun dari `SEED_ADMIN_*`. Anda wajib mengganti password saat login pertama.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Variabel environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variabel | Wajib | Keterangan |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | ya | URL publik tanpa slash akhir |
+| `MONGODB_URI`, `MONGODB_DB` | ya | Atlas, user khusus hak minimal |
+| `AUTH_SECRET` | ya | min. 32 karakter acak, penandatangan sesi admin |
+| `COMPLAINT_SESSION_SECRET`, `COMPLAINT_ACCESS_PEPPER` | untuk Pengaduan | min. 32 karakter, berbeda satu sama lain |
+| `SEED_ADMIN_NAME/EMAIL/PASSWORD` | untuk seed | password min. 12 karakter |
+| `MAIL_USER`, `MAIL_APP_PASSWORD` | untuk email | Gmail dengan App Password (mailbox khusus, 2FA aktif) |
+| `BLOB_READ_WRITE_TOKEN` | untuk media | Vercel Blob |
+| `CRON_SECRET` | untuk auto-close | Vercel mengirimnya sebagai `Authorization: Bearer` |
+| `COMPLAINT_UPLOAD_ENABLED` | opsional | `true` hanya bila storage privat siap |
 
-## Learn More
+Buat rahasia acak: `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`
 
-To learn more about Next.js, take a look at the following resources:
+## Perintah
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Perintah | Fungsi |
+|---|---|
+| `pnpm lint`, `pnpm typecheck`, `pnpm build` | Gate statis |
+| `pnpm test` | Unit test (Vitest) |
+| `pnpm seed` / `pnpm seed:demo` | Data awal / data contoh yang dinonaktifkan |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Uji integrasi dan e2e
 
-## Deploy on Vercel
+Keduanya memakai server yang berjalan dan **database uji** (jangan arahkan ke database prototype, karena membuat dan mengubah data):
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+pnpm build && pnpm start -p 3100            # dengan env database uji
+BASE_URL=http://localhost:3100 pnpm exec tsx scripts/integration.ts
+BASE_URL=http://localhost:3100 pnpm exec playwright test
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+`integration.ts` (138 pemeriksaan): auth, RBAC, alur berita, sanitasi XSS, CSRF, NoSQL injection, klaim bersamaan, auto-close, rate limit, XLSX. `playwright` (34 uji): axe terang/gelap/kontras tinggi, responsif 360 sampai 1440px, widget aksesibilitas, alur UI admin dan pengaduan. Untuk database lokal tanpa Atlas, `mongodb-memory-server` tersedia sebagai dependensi dev.
+
+## Struktur
+
+- `src/lib/` logika server: `http.ts` (kontrak API), `rbac.ts`, `news-state.ts`, `complaint-state.ts`, `sanitize.ts`, `crud.ts`, model di `models/`.
+- `src/app/api/` route handler (publik, auth, admin, cron). Setiap mutasi memeriksa sesi, izin, Origin, dan Zod di server.
+- `src/app/(site)/` halaman publik, `src/app/admin/` panel admin, `src/proxy.ts` gerbang `/admin` dan CSP bernonce.
+- `public/brand/` tempat logo dan ikon (lihat README di dalamnya).
+
+## Keputusan dan penyimpangan dari MTS
+
+- **HTML mentah (`html_raw`)** dirender dari `/embed/news/[slug]` dengan CSP `sandbox` tanpa `allow-same-origin` (bukan `srcdoc`), karena iframe `srcdoc` mewarisi CSP induk dan skripnya akan diblokir.
+- **Caching:** halaman dirender per permintaan dan data dibaca lewat `unstable_cache` bertag. `revalidateTag(tag, { expire: 0 })` dipanggil saat admin menyimpan sehingga perubahan tampil segera.
+- **Lampiran pengaduan** disimpan di koleksi MongoDB privat dan dilayani lewat proxy terotorisasi, tidak pernah lewat URL publik. Tanpa pemindai malware, status tetap `pending_scan` dan admin tidak dapat mengunduh (sesuai Section 29.8). Daftarkan pemindai lewat `registerScanner()` di `src/lib/attachments.ts`.
+- **Berita terjadwal** tampil bila `publishedAt <= now` (dievaluasi saat query, tanpa cron).
+- Em dash tidak dipakai di seluruh proyek.
+
+## Risiko terbuka
+
+1. **Vercel membatasi body fungsi sekitar 4,5 MB.** Lampiran pengaduan diunggah satu berkas per permintaan dan dibatasi 4,4 MB di Vercel walau aturan produk 10 MB. Produksi butuh storage privat dengan pre-signed upload.
+2. **Cron 15 menit** (`vercel.json`) membutuhkan paket Vercel yang mendukungnya. Paket gratis hanya harian, jadi keterlambatan auto-close bisa hingga 24 jam. Dokumentasikan sebelum dipakai.
+3. **Belum diuji dengan SMTP dan Vercel Blob sungguhan** (kredensial belum ada): kirim email dan unggah media baru terverifikasi sampai batas validasi dan penanganan error.
+4. Pengujian axe otomatis tidak menggantikan uji pembaca layar manual. Kualitas suara TTS bergantung perangkat.
+5. Semua gate di MTS Section 28 dan 29.14 (hosting resmi, privasi, retensi, VA/PT) tetap menunggu keputusan pemilik sistem.

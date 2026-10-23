@@ -1,26 +1,122 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@import "./tokens.css";
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-cloud: var(--bg-cloud);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-fg: var(--text);
+  --color-muted: var(--text-muted);
+  --color-primary: var(--primary);
+  --color-primary-fg: var(--primary-fg);
+  --font-sans: var(--font-poppins), system-ui, sans-serif;
+  --radius-card: 12px;
+  --radius-panel: 20px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  font-size: calc(16px * var(--font-scale, 1));
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  line-height: 1.6;
 }
+
+h1, h2, h3, h4 {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -64px;
+  z-index: 100;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: var(--primary-fg);
+}
+.skip-link:focus {
+  top: 8px;
+}
+
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root[data-font="dyslexia"] body {
+  font-family: var(--font-atkinson), system-ui, sans-serif;
+}
+:root[data-spacing="loose"] body {
+  line-height: 1.9;
+  letter-spacing: 0.04em;
+  word-spacing: 0.12em;
+}
+:root[data-contrast="high"] .glass {
+  backdrop-filter: none !important;
+  background: var(--bg) !important;
+}
+:root[data-contrast="high"] .card-border,
+:root[data-contrast="high"] [class*="border-border"] {
+  border-width: 2px;
+  border-color: var(--text);
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px) saturate(140%);
+  border-color: var(--glass-border);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .glass {
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+  }
+}
+
+.tts-active {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: 6px;
+  background: var(--surface-2);
+}
+
+/* Teks artikel: 17px, line-height 1.7, lebar maksimum 70 karakter */
+.prose-article {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  max-width: 70ch;
+}
+.prose-article h2 { font-size: 1.5rem; margin: 2rem 0 0.75rem; }
+.prose-article h3 { font-size: 1.25rem; margin: 1.5rem 0 0.5rem; }
+.prose-article p, .prose-article ul, .prose-article ol, .prose-article blockquote, .prose-article table, .prose-article figure { margin: 0 0 1rem; }
+.prose-article ul { list-style: disc; padding-left: 1.5rem; }
+.prose-article ol { list-style: decimal; padding-left: 1.5rem; }
+.prose-article a { text-decoration: underline; text-underline-offset: 3px; }
+.prose-article blockquote { border-left: 3px solid var(--border); padding-left: 1rem; color: var(--text-muted); }
+.prose-article img { max-width: 100%; height: auto; border-radius: 12px; }
+.prose-article iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; }
+.prose-article table { border-collapse: collapse; width: 100%; }
+.prose-article th, .prose-article td { border: 1px solid var(--border); padding: 0.5rem 0.75rem; text-align: left; }
+.prose-article pre { background: var(--surface-2); padding: 1rem; border-radius: 12px; overflow-x: auto; }
+
+@keyframes marquee-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marquee-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@keyframes drift { 0%,100% { transform: translate3d(0,0,0); } 50% { transform: translate3d(40px,-12px,0); } }
+
+.cloud {
+  position: absolute;
+  border-radius: 999px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--text) 14%, transparent), transparent);
+  filter: blur(24px);
+  animation: drift 40s ease-in-out infinite;
+}
+:root[data-motion="reduce"] .cloud { animation: none; }
