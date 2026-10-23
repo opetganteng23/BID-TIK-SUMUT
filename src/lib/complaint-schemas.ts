@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { objectIdString } from "@/lib/schemas";
+import { REGION_SLUGS } from "@/lib/regions";
 
 // Format telepon Indonesia: 08xx, +628xx, atau 628xx; 9 sampai 13 digit setelah awalan.
 export const phoneSchema = z
@@ -21,6 +22,7 @@ export const createComplaintSchema = z
   .object({
     name: text(2, 100, "Nama"),
     address: text(5, 300, "Alamat"),
+    region: z.enum(REGION_SLUGS, { error: "Pilih kabupaten/kota." }),
     phone: phoneSchema,
     categoryId: objectIdString,
     subject: text(5, 200, "Subjek"),

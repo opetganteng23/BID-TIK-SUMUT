@@ -30,6 +30,7 @@ export const POST = route(async ({ req, requestId }) => {
         accessCodeHash,
         reporter: { name: input.name, address: input.address, phone: input.phone },
         categoryId: new Types.ObjectId(input.categoryId),
+        region: input.region,
         subject: input.subject,
         description: input.description,
         status: "submitted",

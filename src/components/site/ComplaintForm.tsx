@@ -5,6 +5,7 @@ import { useRef, useState } from "react";
 import { Check, Copy, Paperclip, Send } from "lucide-react";
 import { ApiClientError, api } from "@/components/api";
 import { Button, Checkbox, Notice, SelectInput, TextArea, TextInput } from "@/components/ui";
+import { REGIONS } from "@/lib/regions";
 
 type Result = { ticketNumber: string; accessCode: string };
 type Upload = { name: string; status: "ok" | "gagal"; message?: string };
@@ -63,6 +64,7 @@ export function ComplaintForm({ categories, uploadsEnabled }: { categories: { id
         body: {
           name: fd.get("name"),
           address: fd.get("address"),
+          region: fd.get("region"),
           phone: fd.get("phone"),
           categoryId: fd.get("categoryId"),
           subject: fd.get("subject"),
@@ -131,6 +133,7 @@ export function ComplaintForm({ categories, uploadsEnabled }: { categories: { id
       )}
       <TextInput id="name" label="Nama lengkap" required maxLength={100} autoComplete="name" error={f.name} />
       <TextArea id="address" label="Alamat" required rows={2} maxLength={300} autoComplete="street-address" error={f.address} />
+      <SelectInput id="region" label="Kabupaten/Kota lokasi kejadian" required defaultValue="" error={f.region} hint="Dipakai untuk pemetaan sebaran pengaduan." options={[{ value: "", label: "Pilih kabupaten/kota" }, ...REGIONS.map((x) => ({ value: x.slug, label: x.name }))]} />
       <TextInput id="phone" label="Nomor telepon" type="tel" required inputMode="tel" autoComplete="tel" placeholder="08123456789" hint="Gunakan nomor Indonesia yang aktif." error={f.phone} />
       <SelectInput id="categoryId" label="Kategori" required defaultValue="" error={f.categoryId} options={[{ value: "", label: "Pilih kategori" }, ...categories.map((c) => ({ value: c.id, label: c.name }))]} />
       <TextInput id="subject" label="Subjek" required maxLength={200} error={f.subject} />

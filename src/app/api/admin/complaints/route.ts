@@ -13,7 +13,7 @@ export const GET = route(async ({ req, requestId }) => {
   await autoCloseDue({ limit: 50 });
   const filter = buildFilter(q, user.id);
   const [items, total, grouped] = await Promise.all([
-    Complaint.find(filter, "ticketNumber subject status createdAt updatedAt lastMessageAt claimedBy claimedAt confirmationDeadlineAt reporter.name categoryId")
+    Complaint.find(filter, "ticketNumber subject status createdAt updatedAt lastMessageAt claimedBy claimedAt confirmationDeadlineAt reporter.name categoryId region")
       .sort(q.sort ? { [q.sort]: q.dir === "asc" ? 1 : -1, _id: q.dir === "asc" ? 1 : -1 } : { createdAt: -1 })
       .skip((q.page - 1) * q.limit)
       .limit(q.limit)

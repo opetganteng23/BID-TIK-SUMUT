@@ -3,11 +3,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
-import { Download, HandHelping, Send } from "lucide-react";
+import { BarChart3, Download, HandHelping, Send } from "lucide-react";
 import { ApiClientError, api, formatDate } from "@/components/api";
 import { Button, Card, Checkbox, EmptyState, Notice, SelectInput, Skeleton, TextArea, TextInput } from "@/components/ui";
 import { STATUS_LABEL, type ComplaintStatus } from "@/lib/complaint-state";
 import { Pager, SortTh, useSort } from "@/components/admin/table";
+import { REGIONS, regionName } from "@/lib/regions";
 import { can, type Role } from "@/lib/rbac";
 
 const SUMMARY_KEYS: ComplaintStatus[] = ["submitted", "in_progress", "waiting_reporter", "awaiting_reporter_confirmation", "closed"];
@@ -20,6 +21,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
   const [status, setStatus] = useState(initialStatus ?? "");
   const [cat, setCat] = useState("");
   const [mine, setMine] = useState("");
+  const [region, setRegion] = useState("");
   const [q, setQ] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -34,11 +36,12 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
     if (status) p.set("status", status);
     if (cat) p.set("categoryId", cat);
     if (mine) p.set("claimedBy", mine);
+    if (region) p.set("region", region);
     if (q) p.set("q", q);
     if (from) p.set("from", new Date(`${from}T00:00:00+07:00`).toISOString());
     if (to) p.set("to", new Date(`${to}T23:59:59+07:00`).toISOString());
     return p;
-  }, [status, cat, mine, q, from, to]);
+  }, [status, cat, mine, region, q, from, to]);
 
   const load = useCallback(async () => {
     try {
@@ -94,7 +97,10 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-3xl">Pengaduan</h1>
-        <Link href="/admin/complaints/categories" className="inline-flex min-h-11 items-center rounded-full border-2 border-border px-5 text-sm font-medium hover:bg-surface-2">Kategori</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/admin/complaints/analytics" className="inline-flex min-h-11 items-center gap-2 rounded-full bg-primary px-5 text-sm font-medium text-primary-fg hover:opacity-90"><BarChart3 className="size-4" aria-hidden /> Analitik dan laporan</Link>
+          <Link href="/admin/complaints/categories" className="inline-flex min-h-11 items-center rounded-full border-2 border-border px-5 text-sm font-medium hover:bg-surface-2">Kategori</Link>
+        </div>
       </div>
       {error && <Notice kind="error">{error}</Notice>}
 
@@ -113,6 +119,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
         <div className="grid gap-3 md:grid-cols-3">
           <TextInput id="c-q" label="Cari nomor tiket atau subjek" value={q} onChange={(e) => { setPage(1); setQ(e.target.value); }} />
           <SelectInput id="c-cat" label="Kategori" value={cat} onChange={(e) => { setPage(1); setCat(e.target.value); }} options={[{ value: "", label: "Semua" }, ...cats]} />
+          <SelectInput id="c-region" label="Wilayah" value={region} onChange={(e) => { setPage(1); setRegion(e.target.value); }} options={[{ value: "", label: "Semua" }, ...REGIONS.map((x) => ({ value: x.slug, label: x.name }))]} />
           <SelectInput id="c-mine" label="Petugas" value={mine} onChange={(e) => { setPage(1); setMine(e.target.value); }} options={[{ value: "", label: "Semua" }, { value: "me", label: "Saya" }, { value: "none", label: "Belum diambil" }]} />
           <TextInput id="c-from" label="Dari tanggal" type="date" value={from} onChange={(e) => { setPage(1); setFrom(e.target.value); }} />
           <TextInput id="c-to" label="Sampai tanggal" type="date" value={to} onChange={(e) => { setPage(1); setTo(e.target.value); }} />
@@ -137,6 +144,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
               <SortTh label="Tiket" field="ticketNumber" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
               <SortTh label="Subjek" field="subject" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
               <SortTh label="Kategori" state={sorter.state} onSort={() => {}} />
+              <SortTh label="Wilayah" state={sorter.state} onSort={() => {}} />
               <SortTh label="Status" field="status" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
               <SortTh label="Petugas" state={sorter.state} onSort={() => {}} />
               <SortTh label="Masuk" field="createdAt" state={sorter.state} onSort={(f) => { setPage(1); sorter.toggle(f); }} />
@@ -147,6 +155,7 @@ export function ComplaintsDashboard({ role, initialStatus }: { role: Role; initi
                   <td className="whitespace-nowrap px-4 py-3 font-mono"><Link href={`/admin/complaints/${c._id}`} className="underline underline-offset-4">{c.ticketNumber}</Link></td>
                   <td className="max-w-xs truncate px-4 py-3">{c.subject}</td>
                   <td className="px-4 py-3">{c.categoryId?.name}</td>
+                  <td className="px-4 py-3">{c.region ? regionName(c.region) : "-"}</td>
                   <td className="px-4 py-3"><span className="rounded-full border border-border px-2.5 py-0.5 text-xs">{STATUS_LABEL[c.status as ComplaintStatus]}</span></td>
                   <td className="px-4 py-3">{c.claimedBy?.name ?? "-"}</td>
                   <td className="whitespace-nowrap px-4 py-3">{formatDate(c.createdAt, true)}</td>
@@ -235,6 +244,7 @@ export function ComplaintDetail({ id, role }: { id: string; role: Role }) {
           <div><dt className="text-muted">Telepon</dt><dd>{c.reporter?.phone}</dd></div>
           <div className="sm:col-span-2"><dt className="text-muted">Alamat</dt><dd>{c.reporter?.address}</dd></div>
           <div><dt className="text-muted">Kategori</dt><dd>{c.categoryId?.name}</dd></div>
+          <div><dt className="text-muted">Wilayah</dt><dd>{c.region ? regionName(c.region) : "Tidak dicatat"}</dd></div>
           <div><dt className="text-muted">Penanggung jawab</dt><dd>{c.claimedBy?.name ?? "Belum diambil"}</dd></div>
           <div><dt className="text-muted">Masuk</dt><dd>{formatDate(c.createdAt, true)} WIB</dd></div>
           {c.confirmationDeadlineAt && <div><dt className="text-muted">Tenggat konfirmasi pelapor</dt><dd>{formatDate(c.confirmationDeadlineAt, true)} WIB</dd></div>}

@@ -8,6 +8,7 @@ import { can } from "@/lib/rbac";
 import { audit } from "@/lib/audit";
 import { STATUS_LABEL, type ComplaintStatus } from "@/lib/complaint-state";
 import { safeCell, safeFileName } from "@/lib/xlsx-safe";
+import { regionName } from "@/lib/regions";
 import { buildFilter, listQuery } from "@/lib/complaint-query";
 
 export const maxDuration = 60;
@@ -51,6 +52,7 @@ export const GET = route(async ({ req, requestId }) => {
         ]
       : []),
     { header: "Kategori", key: "category", width: 24 },
+    { header: "Wilayah", key: "region", width: 26 },
     { header: "Subjek", key: "subject", width: 36 },
     { header: "Ringkasan Uraian", key: "summary", width: 48 },
     { header: "Status", key: "status", width: 28 },
@@ -75,6 +77,7 @@ export const GET = route(async ({ req, requestId }) => {
       ticket: c.ticketNumber,
       createdAt: fmt(c.createdAt),
       category: cat?.name,
+      region: regionName(c.region),
       subject: c.subject,
       summary: c.description.slice(0, 200),
       status: STATUS_LABEL[c.status as ComplaintStatus],

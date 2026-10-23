@@ -54,3 +54,18 @@ export const formatDate = (d?: string | Date | null, withTime = false) => {
     ...(withTime ? { hour: "2-digit", minute: "2-digit" } : {}),
   }).format(new Date(d));
 };
+
+/** Mengunduh berkas dari endpoint terproteksi (cookie sesi) dan memicu simpan di peramban. */
+export async function downloadFile(url: string, fallbackName: string) {
+  const res = await fetch(url, { credentials: "same-origin" });
+  if (!res.ok) {
+    const j = (await res.json().catch(() => null)) as { error?: { message?: string } } | null;
+    throw new Error(j?.error?.message ?? "Unduhan gagal.");
+  }
+  const blob = await res.blob();
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = /filename="([^"]+)"/.exec(res.headers.get("content-disposition") ?? "")?.[1] ?? fallbackName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}

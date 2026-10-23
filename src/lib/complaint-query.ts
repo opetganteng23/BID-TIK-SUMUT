@@ -13,6 +13,7 @@ export const listQuery = z.object({
   dir: z.enum(["asc", "desc"]).optional(),
   status: z.enum(STATUSES).optional(),
   categoryId: objectIdString.optional(),
+  region: z.string().regex(/^[a-z-]{2,40}$/).optional(),
   claimedBy: z.union([objectIdString, z.literal("me"), z.literal("none")]).optional(),
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
@@ -22,6 +23,7 @@ export function buildFilter(q: z.infer<typeof listQuery>, meId: string) {
   const filter: Record<string, unknown> = {};
   if (q.status) filter.status = q.status;
   if (q.categoryId) filter.categoryId = new Types.ObjectId(q.categoryId);
+  if (q.region) filter.region = q.region;
   if (q.claimedBy === "me") filter.claimedBy = new Types.ObjectId(meId);
   else if (q.claimedBy === "none") filter.claimedBy = { $exists: false };
   else if (q.claimedBy) filter.claimedBy = new Types.ObjectId(q.claimedBy);

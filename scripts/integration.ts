@@ -190,13 +190,18 @@ async function main() {
   console.log("7. Pengaduan: pengajuan dan akses");
   await RateLimit.deleteMany({}); // batas 5 pengajuan/IP/jam sengaja tidak dilonggarkan di server; uji membersihkan counter
   const cats = (await new Client().get("/api/public/complaint-categories")).json.data.items as { id: string }[];
-  const payload = (subject: string) => ({ name: "Warga Fiktif", address: "Jalan Fiktif No. 1, Kota Contoh", phone: "081234567890", categoryId: cats[0].id, subject, description: "Ini uraian pengaduan fiktif untuk pengujian sistem.", privacyConsent: true });
+  const payload = (subject: string) => ({ name: "Warga Fiktif", address: "Jalan Fiktif No. 1, Kota Contoh", phone: "081234567890", categoryId: cats[0].id, region: "medan", subject, description: "Ini uraian pengaduan fiktif untuk pengujian sistem.", privacyConsent: true });
   const noConsent = await new Client().post("/api/public/complaints", { ...payload("Tanpa consent"), privacyConsent: false });
   check("tanpa persetujuan privasi ditolak", noConsent.status === 400);
   const badPhone = await new Client().post("/api/public/complaints", { ...payload("Telepon salah"), phone: "123" });
   check("telepon tidak valid ditolak", badPhone.status === 400 && !!badPhone.json.error.fields?.phone, badPhone.json);
+  const noRegion = await new Client().post("/api/public/complaints", { ...payload("Tanpa wilayah"), region: undefined });
+  check("wilayah wajib diisi", noRegion.status === 400 && !!noRegion.json.error.fields?.region, noRegion.json);
+  const badRegion = await new Client().post("/api/public/complaints", { ...payload("Wilayah palsu"), region: "atlantis" });
+  check("wilayah di luar daftar ditolak", badRegion.status === 400);
   const extra = await new Client().post("/api/public/complaints", { ...payload("Field asing"), status: "closed" });
   check("field status dari klien ditolak", extra.status === 400);
+  await RateLimit.deleteMany({}); // percobaan validasi di atas ikut menghabiskan jatah 5 pengajuan/IP/jam
   const reporter = new Client();
   const created1 = await reporter.post("/api/public/complaints", payload("=HYPERLINK(\"http://x\")"));
   check("pengaduan dibuat", created1.status === 201 && /^PGD-/.test(created1.json.data.ticketNumber), created1.json);

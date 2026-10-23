@@ -150,6 +150,7 @@ describe("helpers", () => {
       name: "Budi Contoh",
       address: "Jalan Contoh 1",
       phone: "081234567890",
+      region: "medan",
       categoryId: "a".repeat(24),
       subject: "Subjek contoh",
       description: "x".repeat(30),
@@ -157,6 +158,8 @@ describe("helpers", () => {
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: true }).success).toBe(true);
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: false }).success).toBe(false);
     expect(createComplaintSchema.safeParse({ ...base, privacyConsent: true, status: "closed" }).success).toBe(false);
+    expect(createComplaintSchema.safeParse({ ...base, region: undefined, privacyConsent: true }).success).toBe(false);
+    expect(createComplaintSchema.safeParse({ ...base, region: "atlantis", privacyConsent: true }).success).toBe(false);
   });
   it("buildSort hanya menerima kolom whitelist", () => {
     expect(buildSort("name", "desc", ["name"], { x: 1 })).toEqual({ name: -1, _id: -1 });

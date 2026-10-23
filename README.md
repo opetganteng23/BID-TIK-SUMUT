@@ -38,6 +38,8 @@ Buat rahasia acak: `node -e "console.log(require('crypto').randomBytes(48).toStr
 | `pnpm lint`, `pnpm typecheck`, `pnpm build` | Gate statis |
 | `pnpm test` | Unit test (Vitest) |
 | `pnpm seed` / `pnpm seed:demo` | Data awal / data contoh yang dinonaktifkan |
+| `pnpm seed:content` | Hero, berita awal, running text, dan isian footer (idempoten, tidak menimpa isian admin) |
+| `pnpm seed:demo-pengaduan -- --count 150` | Pengaduan **fiktif** (subjek berawalan [DEMO]) untuk mencoba dashboard analitik; `-- --purge` menghapusnya |
 
 ### Uji integrasi dan e2e
 
@@ -49,7 +51,18 @@ BASE_URL=http://localhost:3100 pnpm exec tsx scripts/integration.ts
 BASE_URL=http://localhost:3100 pnpm exec playwright test
 ```
 
-`integration.ts` (138 pemeriksaan): auth, RBAC, alur berita, sanitasi XSS, CSRF, NoSQL injection, klaim bersamaan, auto-close, rate limit, XLSX. `playwright` (34 uji): axe terang/gelap/kontras tinggi, responsif 360 sampai 1440px, widget aksesibilitas, alur UI admin dan pengaduan. Untuk database lokal tanpa Atlas, `mongodb-memory-server` tersedia sebagai dependensi dev.
+`integration.ts` (185 pemeriksaan): auth, RBAC, alur berita, sanitasi XSS, CSRF, NoSQL injection, klaim bersamaan, auto-close, rate limit, XLSX. `playwright` (76 uji): axe terang/gelap/kontras tinggi, responsif 360 sampai 1440px, widget aksesibilitas, alur UI admin dan pengaduan. Sebelum Playwright, isi database uji dengan `pnpm seed`, `pnpm seed:content`, dan `pnpm seed:demo-pengaduan -- --count 220` (uji analitik membutuhkan data DEMO). Untuk database lokal tanpa Atlas, `mongodb-memory-server` tersedia sebagai dependensi dev.
+
+## Analitik dan laporan pengaduan
+
+Menu **Admin > Pengaduan > Analitik dan laporan** (`/admin/complaints/analytics`):
+
+- Dashboard: indikator utama, temuan dan rekomendasi otomatis, tren, status, kategori, **peta sebaran per kabupaten/kota** (lingkaran berwarna menurut kategori), matriks wilayah x kategori, pola hari dan jam, umur tunggakan, dan kinerja petugas. Filter periode, kategori, wilayah, dan status. Setiap grafik punya padanan tabel.
+- **Excel** (`/api/admin/complaints/report/xlsx`): lembar Ringkasan, Data Pengaduan, Per Kategori, Per Wilayah, Per Status, Per Hari/Pekan, Per Petugas, Pola Waktu, Wilayah x Kategori, Umur Tiket Terbuka.
+- **Ringkasan eksekutif PPTX** (`/api/admin/complaints/report/pptx`): 13 slide 16:9 dengan grafik native dan peta sebaran skematik.
+- Laporan hanya memuat agregat dan nomor tiket; **tanpa nama, alamat, telepon, atau isi pengaduan**. Unduhan butuh izin `complaints.export` dan tercatat di audit log.
+- Pengaduan kini wajib memilih **kabupaten/kota**. Pengaduan lama tanpa wilayah dihitung sebagai "tidak diketahui".
+- Peta memakai Leaflet dengan tile OpenStreetMap (butuh akses internet dari peramban). Posisi lingkaran adalah titik perkiraan pusat wilayah, bukan batas administratif.
 
 ## Struktur
 

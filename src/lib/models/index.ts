@@ -369,6 +369,8 @@ export const Complaint = define(
         phone: { type: String, required: true },
       },
       categoryId: { type: Schema.Types.ObjectId, ref: "ComplaintCategory", required: true },
+      /** Slug kabupaten/kota (lihat lib/regions). Kosong pada pengaduan lama. */
+      region: { type: String, index: true },
       subject: { type: String, required: true, maxlength: 200 },
       description: { type: String, required: true, maxlength: 5000 },
       status: {

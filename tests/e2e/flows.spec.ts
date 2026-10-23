@@ -63,6 +63,7 @@ test("pengaduan: ajukan, simpan kode, lacak, balas, lalu klaim dan selesaikan ol
   await page.getByLabel("Nama lengkap").fill("Warga Fiktif");
   await page.getByLabel("Alamat").fill("Jalan Fiktif No. 1, Kota Contoh");
   await page.getByLabel("Nomor telepon").fill("081234567890");
+  await page.getByLabel("Kabupaten/Kota lokasi kejadian").selectOption("medan");
   await page.getByLabel("Kategori").selectOption({ index: 1 });
   await page.getByLabel("Subjek").fill("Pengaduan fiktif uji e2e");
   await page.getByLabel("Uraian pengaduan").fill("Ini uraian pengaduan fiktif untuk pengujian end to end sistem.");

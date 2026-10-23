@@ -9,6 +9,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Pustaka pembuat berkas memakai modul Node; jangan dibundel.
+  serverExternalPackages: ["pptxgenjs", "exceljs"],
   // Wajib: loader Tailwind v4 untuk Turbopack (tanpa ini kelas utilitas tidak dihasilkan).
   turbopack: {
     rules: {
