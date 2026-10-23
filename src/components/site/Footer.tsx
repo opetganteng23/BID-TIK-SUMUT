@@ -84,7 +84,10 @@ export function Footer({ settings }: { settings: PublicSettings }) {
             </div>
           )}
 
-          <p className="mt-8 border-t border-border pt-6 text-sm text-muted">{f.copyright || `© ${year} ${settings.orgName || settings.siteName}`}</p>
+          <div className="mt-8 space-y-1 border-t border-border pt-6 text-sm text-muted">
+            <p>{f.copyright || `© ${year} ${settings.orgName || settings.siteName}`}</p>
+            <p>© 2026 OPETHANDAUGER</p>
+          </div>
         </div>
       </div>
     </footer>
